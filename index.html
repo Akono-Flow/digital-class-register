@@ -1585,6 +1585,80 @@ input[type="color"] {
           </button>
         </div>
       </div>
+
+      <!-- GitHub Sync Workflow Panel -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-rotate"></i> GitHub Sync Workflow</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <!-- Current state -->
+          <div>
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">
+              <i class="fa-solid fa-database" style="color:var(--accent);"></i> Current Local State
+            </div>
+            <div id="syncStatusPanel">Loading...</div>
+          </div>
+          <!-- Workflow steps -->
+          <div>
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.6rem;">
+              <i class="fa-solid fa-list-ol" style="color:var(--accent-2);"></i> Daily Workflow
+            </div>
+            <ol style="font-size:0.8rem;color:var(--text-secondary);padding-left:1.25rem;line-height:2;">
+              <li>Mark attendance in the <strong>Attendance</strong> tab and save</li>
+              <li>Click <strong>Download app-data.json</strong> above</li>
+              <li>Go to your GitHub repo and <strong>replace</strong> the existing <code>app-data.json</code></li>
+              <li>Next session: the app loads from <code>localStorage</code> (your changes are already there)</li>
+              <li>On a new device: open the app, click <strong>Merge from GitHub backup</strong> below to pull in any missing records</li>
+            </ol>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <!-- JSON structure reference -->
+        <div style="margin-bottom:0.75rem;">
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">
+            <i class="fa-solid fa-code" style="color:var(--purple);"></i> JSON Structure Reference
+          </div>
+          <pre style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;font-size:0.71rem;font-family:'JetBrains Mono',monospace;color:var(--text-secondary);overflow-x:auto;line-height:1.6;">{
+  "students": [
+    { "id": "abc123", "name": "John Smith", "class": "4A", "gender": "M", "studentId": "..." }
+  ],
+  "attendance": {
+    <span style="color:var(--accent);">"2025-03-12|form|4A"</span>: {           <span style="color:var(--text-muted);">// Form class key: date|form|class</span>
+      "type": "form", "class": "4A", "date": "2025-03-12",
+      "records": {
+        "AM": { "abc123": "P", "def456": "A" },
+        "PM": { "abc123": "P", "def456": "SA" }
+      }
+    },
+    <span style="color:var(--accent-2);">"2025-03-12|subject|5B|Chemistry"</span>: {   <span style="color:var(--text-muted);">// Subject key: date|subject|class|name</span>
+      "type": "subject", "subject": "Chemistry", "class": "5B", "date": "2025-03-12",
+      "records": { "abc123": "P", "def456": "SB" }
+    }
+  }
+}</pre>
+          <div class="info-box" style="margin-top:0.6rem;">
+            <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
+            <span>Each attendance key is <strong>unique per day + class + subject</strong>. Adding new days to the JSON never overwrites old records. The exported file is always the <em>complete</em> cumulative dataset — just replace the GitHub file each time.</span>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <!-- Merge from file -->
+        <div>
+          <div style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.5rem;">
+            <i class="fa-solid fa-code-merge" style="color:var(--warning);"></i> Merge from GitHub Backup
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+            Load an <code>app-data.json</code> from GitHub and <strong>merge</strong> its attendance records into your local data. Your local records always take priority — only missing records are added. Use this when switching devices or after manually editing the GitHub file.
+          </p>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="document.getElementById('mergeFileInput').click()">
+              <i class="fa-solid fa-code-merge"></i> Merge from GitHub backup file
+            </button>
+            <input type="file" id="mergeFileInput" accept=".json" style="display:none;" onchange="mergeImportFile(event)">
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- STUDENTS PIVOT -->
@@ -1969,7 +2043,7 @@ function switchTab(name) {
 function switchPivot(name) {
   document.querySelectorAll('.pivot-tab').forEach(b => b.classList.toggle('active', b.dataset.pivot === name));
   document.querySelectorAll('.pivot-panel').forEach(p => p.classList.toggle('active', p.id === 'pivot-' + name));
-  if (name === 'download') refreshExportStats();
+  if (name === 'download') { refreshExportStats(); refreshSyncPanel(); }
   if (name === 'students') renderStudentsTable();
 }
 
@@ -2057,6 +2131,7 @@ function init() {
   populateDataFilters();
   // Try to load from data.json (GitHub Pages)
   tryLoadDataJson();
+  setTimeout(refreshSyncPanel, 200);
   setInterval(updateNavDate, 60000);
 }
 
@@ -3540,31 +3615,95 @@ function importFullAppData(e) {
 async function tryLoadDataJson() {
   try {
     const res = await fetch('./app-data.json');
-    if (res.ok) {
-      const data = await res.json();
-      if (data.students && !localStorage.getItem('classreg_state')) {
-        state.students = data.students || [];
-        state.attendance = data.attendance || {};
-        state.settings = { ...state.settings, ...(data.settings || {}) };
-        state.teacher = data.teacher || state.teacher;
-        state.reportHistory = data.reportHistory || [];
-        saveState();
-        populateAttSelects();
-        populateCalClassFilter();
-        populateRepFilters();
-        populateDataFilters();
-        updateTeacherChip();
-        applyTheme();
-        applyFontSize(state.settings.fontSize);
-        document.getElementById('studentCount').textContent = state.students.length;
-        showToast('Loaded data from app-data.json', 'info');
-      }
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.students) return;
+    const hasLocal = !!localStorage.getItem('classreg_state');
+    if (!hasLocal) {
+      applyImportedData(data);
+      showToast('Loaded data from app-data.json', 'info');
+    } else {
+      const before = Object.keys(state.attendance).length;
+      state.attendance = mergeAttendance(state.attendance, data.attendance || {});
+      const added = Object.keys(state.attendance).length - before;
+      if (added > 0) { saveState(); showToast(`Synced ${added} attendance record(s) from app-data.json`, 'info'); }
     }
   } catch(e) { /* No data.json, use localStorage */ }
 }
 
+function mergeAttendance(local, remote) {
+  return Object.assign({}, remote, local);
+}
+
+function applyImportedData(data) {
+  state.students      = data.students      || state.students;
+  state.attendance    = data.attendance    || state.attendance;
+  state.settings      = { ...state.settings, ...(data.settings || {}) };
+  state.teacher       = data.teacher       || state.teacher;
+  state.reportHistory = data.reportHistory || state.reportHistory;
+  saveState();
+  applyTheme(); applyFontSize(state.settings.fontSize);
+  populateAttSelects(); populateCalClassFilter(); populateRepFilters(); populateDataFilters();
+  updateTeacherChip(); renderSettings();
+  document.getElementById('studentCount').textContent = state.students.length;
+}
+
 function loadFromFile() {
   document.getElementById('importAppData').click();
+}
+
+function mergeImportFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!data.attendance) { showToast('No attendance data found in file', 'warning'); return; }
+      const before = Object.keys(state.attendance).length;
+      state.attendance = mergeAttendance(state.attendance, data.attendance);
+      const added = Object.keys(state.attendance).length - before;
+      if (data.students) {
+        const existingIds = new Set(state.students.map(s => s.id));
+        const newStudents = (data.students || []).filter(s => !existingIds.has(s.id));
+        state.students.push(...newStudents);
+        if (newStudents.length) showToast(`Added ${newStudents.length} new student(s) from file`, 'info');
+      }
+      saveState();
+      populateAttSelects(); populateCalClassFilter(); populateRepFilters(); populateDataFilters();
+      document.getElementById('studentCount').textContent = state.students.length;
+      refreshSyncPanel();
+      showToast(`Merge complete — ${added} new record(s) added, ${Object.keys(state.attendance).length - added} local records unchanged`, 'success');
+    } catch { showToast('Failed to read file', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+function refreshSyncPanel() {
+  const el = document.getElementById('syncStatusPanel');
+  if (!el) return;
+  const keys = Object.keys(state.attendance);
+  const dates = [...new Set(keys.map(k => k.split('|')[0]))].sort();
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-bottom:0.75rem;">
+      <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent);">${state.students.length}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Students</div>
+      </div>
+      <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent-2);">${keys.length}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Att. Records</div>
+      </div>
+      <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;">
+        <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--purple);">${dates.length}</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;">Days Recorded</div>
+      </div>
+    </div>
+    ${dates.length > 0 ? `<div style="font-size:0.76rem;color:var(--text-muted);">
+      Latest: <strong style="color:var(--text-secondary);">${formatDate(dates[dates.length-1])}</strong> &nbsp;|&nbsp;
+      Earliest: <strong style="color:var(--text-secondary);">${formatDate(dates[0])}</strong>
+    </div>` : '<div style="font-size:0.76rem;color:var(--text-muted);">No attendance records yet.</div>'}`
 }
 
 // ============================================================
