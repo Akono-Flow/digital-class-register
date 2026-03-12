@@ -1,0 +1,216 @@
+{
+  "version": "1.0.0",
+  "exportedAt": "2026-03-12T17:14:15.785Z",
+  "teacher": {
+    "name": "M. Cole",
+    "formClass": "12A3",
+    "subjects": [
+      {
+        "name": "Chemistry",
+        "class": "G12"
+      },
+      {
+        "name": "Chemistry",
+        "class": "G13"
+      },
+      {
+        "name": "Chemistry",
+        "class": "P2"
+      },
+      {
+        "name": "Chemistry",
+        "class": "P8"
+      }
+    ]
+  },
+  "students": [
+    {
+      "id": "mmnpgy7k2s06",
+      "name": "Condappa-Vidayne",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7kkbpv",
+      "name": "Grant-Don-Jae",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7kx63h",
+      "name": "Haye-Leonardo",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7kl4g7",
+      "name": "Lothian-Ethan",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7krbos",
+      "name": "Notice-Tevin",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7ku37j",
+      "name": "Thomas-Lenroy",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "M"
+    },
+    {
+      "id": "mmnpgy7kseuw",
+      "name": "Allen-Khadejay",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kc5fe",
+      "name": "Champagnie-Rehmelli",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kaviz",
+      "name": "Donaldson-Kayla",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kwtyg",
+      "name": "Grant-Casscelia",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7k5zg6",
+      "name": "Henry-Olivia",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7k9hak",
+      "name": "Maxwell-Abrianna",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kn407",
+      "name": "Mills-Jamilla",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kp0gq",
+      "name": "Mitchell-Patria-Kaye",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7ki7wb",
+      "name": "Murray-Brittanese",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7k10q7",
+      "name": "Rose-Kelisha",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7kozww",
+      "name": "Thomas-Etana",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7keyot",
+      "name": "Whyte-Zadie-Joe",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    },
+    {
+      "id": "mmnpgy7ksgk5",
+      "name": "Williams-Gavene",
+      "class": "G10P2",
+      "studentId": "",
+      "gender": "F"
+    }
+  ],
+  "attendance": {},
+  "settings": {
+    "theme": "dark",
+    "fontSize": 14,
+    "rowHeight": "normal",
+    "showStudentIDs": true,
+    "statuses": [
+      {
+        "code": "P",
+        "label": "Present",
+        "color": "#22c55e",
+        "countsAs": "present"
+      },
+      {
+        "code": "A",
+        "label": "Absent",
+        "color": "#ef4444",
+        "countsAs": "absent"
+      },
+      {
+        "code": "SA",
+        "label": "Sick Absent",
+        "color": "#f59e0b",
+        "countsAs": "absent"
+      },
+      {
+        "code": "SB",
+        "label": "School Business",
+        "color": "#3b82f6",
+        "countsAs": "present"
+      },
+      {
+        "code": "E",
+        "label": "Excused",
+        "color": "#a855f7",
+        "countsAs": "absent"
+      },
+      {
+        "code": "L",
+        "label": "Late",
+        "color": "#f97316",
+        "countsAs": "present"
+      }
+    ]
+  },
+  "reportHistory": [],
+  "ui": {
+    "currentTab": "data",
+    "attRole": "subject|Chemistry|P2",
+    "attClass": "P2",
+    "attSession": "AM",
+    "calYear": 2026,
+    "calMonth": 2,
+    "calClassFilter": ""
+  }
+}
