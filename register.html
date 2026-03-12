@@ -1,0 +1,3631 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClassReg — Digital Class Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* ===== CSS Variables ===== */
+:root {
+  --bg-base: #070b17;
+  --bg-card: #0c1120;
+  --bg-elevated: #111827;
+  --bg-input: #0f172a;
+  --bg-hover: #1a2540;
+  --border: #1e2d4a;
+  --border-light: #243355;
+  --accent: #00c8b4;
+  --accent-dim: rgba(0,200,180,0.15);
+  --accent-2: #3b82f6;
+  --accent-2-dim: rgba(59,130,246,0.15);
+  --text-primary: #e2e8f8;
+  --text-secondary: #8892b0;
+  --text-muted: #4a5568;
+  --danger: #ef4444;
+  --danger-dim: rgba(239,68,68,0.15);
+  --success: #22c55e;
+  --success-dim: rgba(34,197,94,0.15);
+  --warning: #f59e0b;
+  --warning-dim: rgba(245,158,11,0.15);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.15);
+  --orange: #f97316;
+  --orange-dim: rgba(249,115,22,0.15);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --font-size-base: 14px;
+  --transition: 0.2s ease;
+  --nav-height: 60px;
+  --tab-bar-height: 54px;
+}
+
+[data-theme="light"] {
+  --bg-base: #f0f4f8;
+  --bg-card: #ffffff;
+  --bg-elevated: #f8fafc;
+  --bg-input: #f1f5f9;
+  --bg-hover: #e8eef7;
+  --border: #d1dde8;
+  --border-light: #e2eaf5;
+  --accent: #0097a7;
+  --accent-dim: rgba(0,151,167,0.12);
+  --accent-2: #2563eb;
+  --accent-2-dim: rgba(37,99,235,0.12);
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --text-muted: #9aa5b4;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: var(--font-size-base); scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-card); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ===== Top Nav ===== */
+.app-nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  height: var(--nav-height);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.5rem;
+  z-index: 100;
+  gap: 1rem;
+}
+
+.nav-brand {
+  display: flex; align-items: center; gap: 0.6rem;
+  text-decoration: none;
+}
+
+.nav-brand-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 0.9rem;
+}
+
+.nav-brand-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 1.1rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.nav-brand-sub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.nav-spacer { flex: 1; }
+
+.nav-info {
+  display: flex; align-items: center; gap: 1.2rem;
+  font-size: 0.8rem; color: var(--text-secondary);
+}
+
+.nav-info .teacher-chip {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(0,200,180,0.25);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.nav-info .teacher-chip:hover { background: rgba(0,200,180,0.25); }
+
+.nav-date { color: var(--text-secondary); font-size: 0.78rem; }
+
+/* ===== Tab Bar ===== */
+.tab-bar {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0; right: 0;
+  height: var(--tab-bar-height);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: stretch;
+  padding: 0 1rem;
+  gap: 0.25rem;
+  z-index: 99;
+  overflow-x: auto;
+}
+
+.tab-btn {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0 1.1rem;
+  background: none; border: none;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem; font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+
+.tab-btn:hover { color: var(--text-primary); }
+
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.tab-btn i { font-size: 0.85rem; }
+
+/* ===== Main Content ===== */
+.main-content {
+  margin-top: calc(var(--nav-height) + var(--tab-bar-height));
+  padding: 1.5rem;
+  min-height: calc(100vh - var(--nav-height) - var(--tab-bar-height));
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 0.95rem;
+  color: var(--text-primary);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.card-title i { color: var(--accent); font-size: 0.85rem; }
+
+/* ===== Grid Layouts ===== */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+
+/* ===== Form Elements ===== */
+.form-group { margin-bottom: 1rem; }
+.form-group:last-child { margin-bottom: 0; }
+
+label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+input, select, textarea {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  padding: 0.55rem 0.8rem;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+select { cursor: pointer; }
+
+textarea { resize: vertical; min-height: 100px; }
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  border: none; cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem; font-weight: 500;
+  transition: all var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+}
+.btn-primary:hover { background: #00a89a; }
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--bg-hover); border-color: var(--border-light); }
+
+.btn-danger {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.25); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+.btn-sm { padding: 0.3rem 0.65rem; font-size: 0.76rem; }
+.btn-lg { padding: 0.7rem 1.4rem; font-size: 0.9rem; }
+.btn-icon { padding: 0.45rem; min-width: 32px; justify-content: center; }
+
+/* ===== Status Badges ===== */
+.badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.03em;
+  cursor: default;
+  min-width: 28px;
+  border: 1px solid transparent;
+}
+
+/* ===== Attendance Tab ===== */
+#att-toolbar {
+  display: flex; align-items: center; gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.att-class-info {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.class-info-chip {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(0,200,180,0.25);
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.session-tabs {
+  display: flex; gap: 0.5rem;
+}
+
+.session-tab {
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.8rem; font-weight: 500;
+  transition: all var(--transition);
+}
+
+.session-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(0,200,180,0.3);
+}
+
+.students-grid {
+  display: flex; flex-direction: column; gap: 0.5rem;
+}
+
+.student-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 1rem;
+  transition: all var(--transition);
+}
+
+.student-row:hover { border-color: var(--border-light); background: var(--bg-hover); }
+.student-row.selected { border-color: var(--accent); background: var(--accent-dim); }
+
+.student-row input[type="checkbox"] {
+  width: 16px; height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.student-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  min-width: 24px;
+}
+
+.student-name {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.student-id-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.status-buttons {
+  display: flex; gap: 0.3rem;
+}
+
+.status-btn {
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all var(--transition);
+  opacity: 0.5;
+}
+
+.status-btn.active { opacity: 1; box-shadow: 0 0 0 2px currentColor; }
+.status-btn:hover { opacity: 0.85; }
+
+/* ===== Calendar Tab ===== */
+.calendar-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.calendar-nav-btn {
+  width: 36px; height: 36px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-secondary);
+  transition: all var(--transition);
+}
+.calendar-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.calendar-month-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 1.2rem;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day-header {
+  text-align: center;
+  padding: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cal-day {
+  min-height: 80px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  cursor: pointer;
+  position: relative;
+  transition: all var(--transition);
+}
+
+.cal-day:hover { border-color: var(--accent); background: var(--bg-hover); }
+.cal-day.today { border-color: var(--accent); }
+.cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-day.weekend { opacity: 0.4; }
+.cal-day.has-data { border-color: var(--border-light); }
+
+.cal-day-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.3rem;
+}
+
+.cal-day.today .cal-day-num {
+  color: var(--accent);
+  background: var(--accent-dim);
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.cal-day-badges {
+  display: flex; flex-wrap: wrap; gap: 2px;
+}
+
+.cal-mini-badge {
+  font-size: 0.6rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Calendar Tooltip */
+.cal-tooltip {
+  position: fixed;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  z-index: 200;
+  min-width: 180px;
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cal-tooltip.visible { opacity: 1; }
+
+.tooltip-title {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+}
+
+.tooltip-stat {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+}
+
+/* ===== Modals ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 740px;
+  max-height: 90vh;
+  display: flex; flex-direction: column;
+  box-shadow: var(--shadow);
+  transform: translateY(20px);
+  transition: transform 0.2s;
+}
+
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 1.05rem;
+}
+
+.modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto; flex: 1;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
+}
+
+/* ===== Table ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.data-table th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.65rem 0.9rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--bg-hover); }
+
+/* ===== Reports Tab ===== */
+.report-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  text-align: center;
+}
+
+.report-stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.report-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+/* ===== Data Tab ===== */
+.pivot-tabs {
+  display: flex; gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.pivot-tab {
+  padding: 0.45rem 1rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.82rem; font-weight: 500;
+  transition: all var(--transition);
+}
+
+.pivot-tab.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: rgba(0,200,180,0.3);
+}
+
+.pivot-panel { display: none; }
+.pivot-panel.active { display: block; }
+
+.upload-zone {
+  border: 2px dashed var(--border-light);
+  border-radius: var(--radius);
+  padding: 2.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: var(--bg-elevated);
+}
+
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.upload-zone i {
+  font-size: 2.5rem;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+  display: block;
+}
+
+/* ===== Settings Tab ===== */
+.settings-section {
+  margin-bottom: 2rem;
+}
+
+.settings-section-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 0.9rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.settings-section-title i { color: var(--accent); }
+
+.status-editor-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px auto auto auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-editor-row:last-child { border-bottom: none; }
+
+input[type="color"] {
+  padding: 0.2rem;
+  height: 34px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-flex;
+  width: 40px; height: 22px;
+  cursor: pointer;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-knob {
+  position: absolute; inset: 0;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  transition: all var(--transition);
+}
+
+.toggle-knob::after {
+  content: '';
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 14px; height: 14px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: all var(--transition);
+}
+
+.toggle-switch input:checked + .toggle-knob { background: var(--accent-dim); border-color: var(--accent); }
+.toggle-switch input:checked + .toggle-knob::after { transform: translateX(18px); background: var(--accent); }
+
+.font-size-control {
+  display: flex; align-items: center; gap: 1rem;
+}
+
+.font-slider {
+  -webkit-appearance: none;
+  width: 200px; height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  padding: 0;
+  border: none;
+}
+
+.font-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+
+/* ===== Reports ===== */
+.report-filter-bar {
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.report-table-wrap {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.report-table th {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 0.8rem;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+
+.report-table th:first-child { text-align: left; }
+
+.report-table td {
+  padding: 0.55rem 0.8rem;
+  border: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.report-table td:first-child { text-align: left; font-weight: 500; }
+
+.report-table tbody tr:nth-child(even) { background: var(--bg-elevated); }
+.report-table tbody tr:hover { background: var(--bg-hover); }
+
+/* ===== Teacher Setup Modal ===== */
+.teacher-class-tag {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.78rem;
+  margin: 0.2rem;
+}
+
+.tag-remove {
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color var(--transition);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.tag-remove:hover { color: var(--danger); }
+
+/* ===== Toasts ===== */
+.toast-container {
+  position: fixed;
+  bottom: 1.5rem; right: 1.5rem;
+  z-index: 999;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 0.84rem;
+  min-width: 260px;
+  box-shadow: var(--shadow);
+  animation: slideIn 0.25s ease, fadeOut 0.25s ease 2.5s forwards;
+  pointer-events: all;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent-2); }
+.toast.warning { border-left: 3px solid var(--warning); }
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateX(100%); }
+}
+
+/* ===== Search bar ===== */
+.search-bar {
+  position: relative;
+}
+
+.search-bar input {
+  padding-left: 2.2rem;
+}
+
+.search-bar i {
+  position: absolute;
+  left: 0.7rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+/* ===== Divider ===== */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1rem 0;
+}
+
+/* ===== Empty State ===== */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-muted);
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  display: block;
+  opacity: 0.4;
+}
+
+.empty-state h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-secondary);
+}
+
+.empty-state p { font-size: 0.82rem; }
+
+/* ===== Tabs in modal ===== */
+.modal-tabs {
+  display: flex; gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.modal-tab {
+  padding: 0.5rem 1rem;
+  background: none; border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.82rem; font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-family: 'DM Sans', sans-serif;
+  transition: all var(--transition);
+}
+
+.modal-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ===== Info Box ===== */
+.info-box {
+  background: var(--accent-2-dim);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  display: flex; gap: 0.5rem;
+}
+
+.info-box i { color: var(--accent-2); flex-shrink: 0; }
+
+/* ===== Quick actions bar ===== */
+.quick-actions {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.quick-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-right: 0.25rem;
+  white-space: nowrap;
+}
+
+.bulk-status-btn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  transition: all var(--transition);
+}
+
+.bulk-status-btn:hover { filter: brightness(1.2); }
+
+/* ===== Progress bar ===== */
+.progress-bar {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+/* ===== Reports history ===== */
+.report-history-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  transition: all var(--transition);
+}
+
+.report-history-item:hover { border-color: var(--border-light); }
+
+.report-icon {
+  width: 36px; height: 36px;
+  background: var(--danger-dim);
+  color: var(--danger);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+/* ===== Attendance Summary Bar ===== */
+.att-summary {
+  display: flex; gap: 0.75rem; flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.att-summary-item {
+  display: flex; align-items: center; gap: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.att-summary-item .count {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .main-content { padding: 1rem; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .status-editor-row { grid-template-columns: 60px 1fr 60px auto auto auto; gap: 0.3rem; }
+  .att-toolbar { flex-wrap: wrap; }
+  .report-filter-bar { flex-direction: column; align-items: stretch; }
+}
+
+/* ===== Data tab panels ===== */
+.data-upload-panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .data-upload-panels { grid-template-columns: 1fr; }
+}
+
+/* Highlight row effect */
+@keyframes highlightRow {
+  0% { background: var(--accent-dim); }
+  100% { background: transparent; }
+}
+
+.row-highlight { animation: highlightRow 1.5s ease; }
+
+/* ===== Loading spinner ===== */
+.spinner {
+  display: inline-block;
+  width: 18px; height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Gender chip */
+.gender-chip {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+}
+
+.gender-m { background: var(--accent-2-dim); color: var(--accent-2); }
+.gender-f { background: var(--purple-dim); color: var(--purple); }
+.gender-o { background: var(--warning-dim); color: var(--warning); }
+
+/* Collapsible section */
+.collapse-header {
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; padding: 0.5rem 0;
+  user-select: none;
+}
+
+.collapse-header i.arrow { transition: transform var(--transition); }
+.collapse-header.open i.arrow { transform: rotate(180deg); }
+
+.collapse-body { display: none; }
+.collapse-body.open { display: block; }
+
+/* Tab counter badge */
+.tab-counter {
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 0.1rem 0.35rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<!-- ===== TOP NAV ===== -->
+<nav class="app-nav">
+  <a href="#" class="nav-brand">
+    <div class="nav-brand-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+    <div>
+      <div class="nav-brand-text">ClassReg</div>
+      <div class="nav-brand-sub">Digital Register</div>
+    </div>
+  </a>
+  <div class="nav-spacer"></div>
+  <div class="nav-info">
+    <span class="nav-date" id="navDate"></span>
+    <span class="teacher-chip" id="teacherChip" onclick="openTeacherModal()">
+      <i class="fa-solid fa-user-tie"></i> <span id="teacherNameDisplay">Setup Teacher</span>
+    </span>
+  </div>
+</nav>
+
+<!-- ===== TAB BAR ===== -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="attendance" onclick="switchTab('attendance')">
+    <i class="fa-solid fa-check-square"></i> Attendance
+  </button>
+  <button class="tab-btn" data-tab="calendar" onclick="switchTab('calendar')">
+    <i class="fa-regular fa-calendar"></i> Calendar
+  </button>
+  <button class="tab-btn" data-tab="reports" onclick="switchTab('reports')">
+    <i class="fa-solid fa-chart-bar"></i> Reports
+  </button>
+  <button class="tab-btn" data-tab="data" onclick="switchTab('data')">
+    <i class="fa-solid fa-database"></i> Data
+  </button>
+  <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">
+    <i class="fa-solid fa-sliders"></i> Settings
+  </button>
+</div>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="main-content">
+
+  <!-- =============================== ATTENDANCE TAB =============================== -->
+  <div id="tab-attendance" class="tab-panel active">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;">
+        <i class="fa-solid fa-check-square" style="color:var(--accent);margin-right:0.4rem;"></i>Attendance
+      </h2>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <div class="form-group" style="margin:0;">
+          <select id="attRoleSelect" onchange="onRoleChange()" style="width:auto;">
+            <option value="">— Select Role —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <select id="attClassSelect" onchange="onAttClassChange()" style="width:auto;">
+            <option value="">— Select Class —</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <input type="date" id="attDatePicker" style="width:auto;" onchange="loadAttendanceData()">
+        </div>
+      </div>
+    </div>
+
+    <!-- Session tabs for form class -->
+    <div id="sessionTabsWrap" style="display:none;" class="att-class-info">
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin-right:0.5rem;">Session:</div>
+      <div class="session-tabs">
+        <div class="session-tab active" data-session="AM" onclick="switchSession('AM')">
+          <i class="fa-regular fa-sun"></i> AM
+        </div>
+        <div class="session-tab" data-session="PM" onclick="switchSession('PM')">
+          <i class="fa-regular fa-moon"></i> PM
+        </div>
+      </div>
+      <div class="nav-spacer"></div>
+      <div id="formClassChip" class="class-info-chip">Form Class</div>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div id="attSummary" class="att-summary" style="display:none;"></div>
+
+    <!-- Bulk actions -->
+    <div id="quickActions" class="quick-actions" style="display:none;">
+      <span class="quick-label"><i class="fa-solid fa-bolt"></i> Quick Mark:</span>
+      <button class="btn btn-secondary btn-sm" onclick="toggleSelectAll()">
+        <i class="fa-solid fa-check-double"></i> <span id="selAllTxt">Select All</span>
+      </button>
+      <span class="quick-label" style="margin-left:0.25rem;">Set to:</span>
+      <div id="bulkStatusBtns"></div>
+      <div class="nav-spacer"></div>
+      <button class="btn btn-primary btn-sm" onclick="saveAttendance()">
+        <i class="fa-solid fa-floppy-disk"></i> Save
+      </button>
+    </div>
+
+    <!-- Students List -->
+    <div id="studentsContainer">
+      <div class="empty-state">
+        <i class="fa-solid fa-users"></i>
+        <h3>No Class Selected</h3>
+        <p>Please select a role and class from the dropdown above to begin marking attendance.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== CALENDAR TAB =============================== -->
+  <div id="tab-calendar" class="tab-panel">
+    <div class="calendar-header">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;">
+        <i class="fa-regular fa-calendar" style="color:var(--accent);margin-right:0.4rem;"></i>Calendar
+      </h2>
+      <div style="display:flex;align-items:center;gap:0.75rem;">
+        <div class="form-group" style="margin:0;">
+          <select id="calClassFilter" style="width:auto;" onchange="renderCalendar()">
+            <option value="">All Classes</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <button class="calendar-nav-btn" onclick="changeCalMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+          <span class="calendar-month-title" id="calMonthTitle"></span>
+          <button class="calendar-nav-btn" onclick="changeCalMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="goToToday()">Today</button>
+      </div>
+    </div>
+
+    <div class="calendar-grid" id="calGrid">
+      <div class="cal-day-header">Sun</div>
+      <div class="cal-day-header">Mon</div>
+      <div class="cal-day-header">Tue</div>
+      <div class="cal-day-header">Wed</div>
+      <div class="cal-day-header">Thu</div>
+      <div class="cal-day-header">Fri</div>
+      <div class="cal-day-header">Sat</div>
+    </div>
+  </div>
+
+  <!-- =============================== REPORTS TAB =============================== -->
+  <div id="tab-reports" class="tab-panel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.75rem;">
+      <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;">
+        <i class="fa-solid fa-chart-bar" style="color:var(--accent);margin-right:0.4rem;"></i>Reports
+      </h2>
+      <div style="display:flex;gap:0.5rem;">
+        <button class="btn btn-secondary btn-sm" onclick="generatePDFReport()">
+          <i class="fa-solid fa-file-pdf"></i> Export PDF
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="generateCSVReport()">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="report-filter-bar">
+        <div class="form-group" style="margin:0;flex:1;min-width:140px;">
+          <label>Class</label>
+          <select id="repClassFilter" onchange="generateReport()">
+            <option value="">All Classes</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+          <label>Period</label>
+          <select id="repPeriod" onchange="generateReport()">
+            <option value="all">All Time</option>
+            <option value="month">This Month</option>
+            <option value="week">This Week</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+        <div id="customDateRange" style="display:none;display:flex;gap:0.5rem;flex:1;">
+          <div class="form-group" style="margin:0;flex:1;">
+            <label>From</label>
+            <input type="date" id="repDateFrom" onchange="generateReport()">
+          </div>
+          <div class="form-group" style="margin:0;flex:1;">
+            <label>To</label>
+            <input type="date" id="repDateTo" onchange="generateReport()">
+          </div>
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+          <label>Type</label>
+          <select id="repType" onchange="generateReport()">
+            <option value="subject">Subject Class</option>
+            <option value="form">Form Class</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary stats row -->
+    <div class="grid-3" id="repStatsRow" style="margin-bottom:1rem;"></div>
+
+    <!-- Main report table -->
+    <div class="card" style="margin-bottom:1rem;">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-table"></i> Attendance Report</div>
+        <div style="display:flex;gap:0.5rem;">
+          <div class="search-bar" style="width:220px;">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" id="repSearch" placeholder="Search student..." oninput="filterReportTable()">
+          </div>
+        </div>
+      </div>
+      <div class="report-table-wrap" id="repTableWrap">
+        <div class="empty-state"><i class="fa-solid fa-chart-pie"></i><h3>No Data Yet</h3><p>Add students and mark attendance to see reports.</p></div>
+      </div>
+    </div>
+
+    <!-- Form class gender report (shown when form class selected) -->
+    <div id="genderReportCard" class="card" style="display:none;margin-bottom:1rem;">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-venus-mars"></i> Gender & Session Report</div>
+      </div>
+      <div id="genderReportContent"></div>
+    </div>
+
+    <!-- Report History -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><i class="fa-solid fa-history"></i> Report History</div>
+        <button class="btn btn-danger btn-sm" onclick="clearReportHistory()"><i class="fa-solid fa-trash"></i> Clear</button>
+      </div>
+      <div id="reportHistoryList">
+        <div class="empty-state" style="padding:1.5rem;">
+          <i class="fa-regular fa-file-pdf"></i>
+          <h3>No Reports Generated</h3>
+          <p>Exported reports will appear here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== DATA TAB =============================== -->
+  <div id="tab-data" class="tab-panel">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;margin-bottom:1.25rem;">
+      <i class="fa-solid fa-database" style="color:var(--accent);margin-right:0.4rem;"></i>Data Management
+    </h2>
+
+    <div class="pivot-tabs">
+      <button class="pivot-tab active" data-pivot="upload" onclick="switchPivot('upload')">
+        <i class="fa-solid fa-upload"></i> Upload / Import
+      </button>
+      <button class="pivot-tab" data-pivot="download" onclick="switchPivot('download')">
+        <i class="fa-solid fa-download"></i> Download / Export
+      </button>
+      <button class="pivot-tab" data-pivot="students" onclick="switchPivot('students')">
+        <i class="fa-solid fa-users"></i> Students <span class="tab-counter" id="studentCount">0</span>
+      </button>
+    </div>
+
+    <!-- UPLOAD PIVOT -->
+    <div id="pivot-upload" class="pivot-panel active">
+      <div class="info-box" style="margin-bottom:1rem;">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>Import student data using any of the methods below. Required fields: <strong>Name</strong>, <strong>Class</strong>. Optional: <strong>Student ID</strong>, <strong>Gender</strong>.</span>
+      </div>
+
+      <div class="data-upload-panels">
+        <!-- File upload -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-arrow-up"></i> File Upload</div>
+          </div>
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()" 
+               ondrop="handleFileDrop(event)" ondragover="event.preventDefault();this.classList.add('drag-over')"
+               ondragleave="this.classList.remove('drag-over')">
+            <i class="fa-solid fa-cloud-upload-alt"></i>
+            <div style="font-weight:600;margin-bottom:0.4rem;">Drop file here or click to browse</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);">Supports JSON, XLSX, CSV</div>
+          </div>
+          <input type="file" id="fileInput" accept=".json,.xlsx,.csv" style="display:none;" onchange="handleFileSelect(event)">
+          <div id="filePreview" style="margin-top:1rem;display:none;"></div>
+        </div>
+
+        <!-- Paste data -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-paste"></i> Paste Data</div>
+            <div style="display:flex;gap:0.4rem;">
+              <select id="pasteDelimiter" style="width:auto;font-size:0.78rem;">
+                <option value=",">CSV (,)</option>
+                <option value="\t">TSV (Tab)</option>
+                <option value=";">Semicolon (;)</option>
+                <option value="|">Pipe (|)</option>
+              </select>
+            </div>
+          </div>
+          <div style="font-size:0.76rem;color:var(--text-muted);margin-bottom:0.5rem;">
+            First row should be headers. Columns: name, class, studentId, gender
+          </div>
+          <textarea id="pasteArea" placeholder="Paste CSV or tab-separated data here...&#10;Example:&#10;name,class,gender&#10;John Smith,4A,M&#10;Jane Doe,4A,F"></textarea>
+          <div style="display:flex;gap:0.5rem;margin-top:0.75rem;">
+            <button class="btn btn-primary btn-sm" onclick="parsePastedData()">
+              <i class="fa-solid fa-check"></i> Parse & Preview
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('pasteArea').value=''">
+              <i class="fa-solid fa-eraser"></i> Clear
+            </button>
+          </div>
+          <div id="pastePreview" style="margin-top:0.75rem;display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Manual entry -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-keyboard"></i> Manual Entry</div>
+          <button class="btn btn-primary btn-sm" onclick="addManualStudent()">
+            <i class="fa-solid fa-plus"></i> Add Student
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:0.75rem;align-items:end;margin-bottom:0.75rem;">
+          <div class="form-group" style="margin:0;">
+            <label>Full Name *</label>
+            <input type="text" id="manualName" placeholder="e.g. John Smith">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Class *</label>
+            <input type="text" id="manualClass" placeholder="e.g. 4A">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Student ID</label>
+            <input type="text" id="manualSID" placeholder="Optional">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Gender</label>
+            <select id="manualGender">
+              <option value="">Not specified</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+              <option value="O">Other</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="margin-bottom:0;" onclick="addManualStudent()">
+            <i class="fa-solid fa-plus"></i> Add
+          </button>
+        </div>
+        <!-- Quick batch add -->
+        <div class="divider"></div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">
+          <i class="fa-solid fa-bolt" style="color:var(--warning);"></i> Quick Batch — Enter one student per line (name,class)
+        </div>
+        <textarea id="batchArea" style="min-height:80px;" placeholder="John Smith,4A&#10;Jane Doe,4A&#10;Peter Brown,5B"></textarea>
+        <button class="btn btn-secondary btn-sm" style="margin-top:0.5rem;" onclick="addBatchStudents()">
+          <i class="fa-solid fa-list-check"></i> Add Batch
+        </button>
+      </div>
+
+      <!-- Import full app data JSON -->
+      <div class="card" style="margin-top:1rem;">
+        <div class="card-header">
+          <div class="card-title"><i class="fa-solid fa-file-import"></i> Import App Data</div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+          Import a full app data backup (JSON) previously exported from ClassReg. This will replace all current data.
+        </p>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="document.getElementById('importAppData').click()">
+            <i class="fa-solid fa-folder-open"></i> Browse for Backup File
+          </button>
+          <input type="file" id="importAppData" accept=".json" style="display:none;" onchange="importFullAppData(event)">
+        </div>
+      </div>
+    </div>
+
+    <!-- DOWNLOAD PIVOT -->
+    <div id="pivot-download" class="pivot-panel">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-export"></i> Export App Data</div>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">
+            Export all app data (students, attendance records, settings) as a JSON file. This can be imported back into ClassReg or manually added to GitHub.
+          </p>
+          <div style="background:var(--bg-elevated);border-radius:var(--radius-sm);padding:0.75rem;margin-bottom:1rem;font-size:0.8rem;font-family:'JetBrains Mono',monospace;color:var(--text-muted);">
+            <div id="exportStats">Loading...</div>
+          </div>
+          <button class="btn btn-primary" onclick="exportFullData()">
+            <i class="fa-solid fa-download"></i> Download app-data.json
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-file-csv"></i> Export Students CSV</div>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">
+            Export student list to CSV or Excel format.
+          </p>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="exportStudentsCSV()">
+              <i class="fa-solid fa-file-csv"></i> Export CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportStudentsXLSX()">
+              <i class="fa-solid fa-file-excel"></i> Export XLSX
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-solid fa-calendar-check"></i> Export Attendance</div>
+          </div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+            Export attendance records for a specific class and date range.
+          </p>
+          <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:0.75rem;">
+            <div class="form-group" style="margin:0;flex:1;">
+              <label>Class</label>
+              <select id="expAttClass"><option value="">All Classes</option></select>
+            </div>
+            <div class="form-group" style="margin:0;flex:1;">
+              <label>From</label>
+              <input type="date" id="expDateFrom">
+            </div>
+            <div class="form-group" style="margin:0;flex:1;">
+              <label>To</label>
+              <input type="date" id="expDateTo">
+            </div>
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button class="btn btn-secondary" onclick="exportAttendanceCSV()">
+              <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-secondary" onclick="exportAttendanceXLSX()">
+              <i class="fa-solid fa-file-excel"></i> XLSX
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><i class="fa-brands fa-github"></i> GitHub Pages Guide</div>
+          </div>
+          <div class="info-box" style="margin-bottom:0.75rem;">
+            <i class="fa-solid fa-lightbulb"></i>
+            <div>
+              <strong>Hosting on GitHub Pages:</strong><br>
+              1. Export <code>app-data.json</code><br>
+              2. Place both <code>index.html</code> and <code>app-data.json</code> in your repo root<br>
+              3. Enable GitHub Pages in repo Settings<br>
+              4. The app will auto-load data from <code>app-data.json</code>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadFromFile()">
+            <i class="fa-solid fa-cloud-download-alt"></i> Load data.json (GitHub)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS PIVOT -->
+    <div id="pivot-students" class="pivot-panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+        <div class="search-bar" style="flex:1;max-width:300px;">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="studentSearch" placeholder="Search students..." oninput="renderStudentsTable()">
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+          <select id="studentClassFilter" onchange="renderStudentsTable()" style="width:auto;">
+            <option value="">All Classes</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="deleteSelectedStudents()" id="delStudentsBtn" style="display:none;">
+            <i class="fa-solid fa-trash"></i> Delete Selected
+          </button>
+        </div>
+      </div>
+      <div class="card">
+        <div id="studentsTableWrap">
+          <div class="empty-state"><i class="fa-solid fa-users"></i><h3>No Students</h3><p>Add students using the Upload/Import tab.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================== SETTINGS TAB =============================== -->
+  <div id="tab-settings" class="tab-panel">
+    <h2 style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.25rem;margin-bottom:1.25rem;">
+      <i class="fa-solid fa-sliders" style="color:var(--accent);margin-right:0.4rem;"></i>Settings
+    </h2>
+
+    <div class="grid-2" style="gap:1.5rem;">
+      <!-- Left column -->
+      <div>
+        <!-- Status Management -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <i class="fa-solid fa-tags"></i> Attendance Statuses
+          </div>
+          <div id="statusEditorList"></div>
+          <button class="btn btn-secondary btn-sm" style="margin-top:0.75rem;" onclick="addNewStatus()">
+            <i class="fa-solid fa-plus"></i> Add Status
+          </button>
+        </div>
+
+        <!-- Teacher / Class Setup -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <i class="fa-solid fa-chalkboard-teacher"></i> Teacher & Classes
+          </div>
+          <div class="card">
+            <div class="form-group">
+              <label>Teacher Name</label>
+              <input type="text" id="settingsTeacherName" placeholder="Your full name" onchange="saveTeacherSettings()">
+            </div>
+            <div class="form-group">
+              <label>Form / Homeroom Class</label>
+              <input type="text" id="settingsFormClass" placeholder="e.g. 4A" onchange="saveTeacherSettings()">
+            </div>
+            <div class="form-group">
+              <label>Subject Classes</label>
+              <div id="subjectClassTags" style="margin-bottom:0.5rem;"></div>
+              <div style="display:flex;gap:0.5rem;">
+                <input type="text" id="newSubjectClass" placeholder="e.g. Chemistry 5B" style="flex:1;" onkeydown="if(event.key==='Enter')addSubjectClass()">
+                <button class="btn btn-secondary btn-sm" onclick="addSubjectClass()"><i class="fa-solid fa-plus"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div>
+        <!-- UI Preferences -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <i class="fa-solid fa-paintbrush"></i> UI Preferences
+          </div>
+          <div class="card">
+            <div class="form-group">
+              <label>Theme</label>
+              <div style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:0.82rem;color:var(--text-secondary);">Dark</span>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                  <span class="toggle-knob"></span>
+                </label>
+                <span style="font-size:0.82rem;color:var(--text-secondary);">Light</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Font Size: <span id="fontSizeLabel">14px</span></label>
+              <div class="font-size-control">
+                <span style="font-size:0.75rem;color:var(--text-muted);">A</span>
+                <input type="range" class="font-slider" id="fontSizeSlider" min="12" max="20" value="14" oninput="onFontSizeChange(this.value)">
+                <span style="font-size:1rem;color:var(--text-muted);">A</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Student Row Height</label>
+              <select id="rowHeight" onchange="applyRowHeight()">
+                <option value="compact">Compact</option>
+                <option value="normal" selected>Normal</option>
+                <option value="comfortable">Comfortable</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Show Student IDs</label>
+              <label class="toggle-switch">
+                <input type="checkbox" id="showStudentIDs" checked onchange="saveUIPrefs()">
+                <span class="toggle-knob"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Data Management -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <i class="fa-solid fa-database"></i> Data Management
+          </div>
+          <div class="card">
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+              <button class="btn btn-secondary" onclick="switchTab('data');switchPivot('download');">
+                <i class="fa-solid fa-download"></i> Export All Data
+              </button>
+              <button class="btn btn-danger" onclick="confirmClearData()">
+                <i class="fa-solid fa-trash-alt"></i> Clear All Data
+              </button>
+              <div class="info-box" style="font-size:0.78rem;">
+                <i class="fa-solid fa-exclamation-triangle"></i>
+                <span>Export your data before clearing. Data is stored in browser localStorage.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- App Info -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <i class="fa-solid fa-circle-info"></i> About ClassReg
+          </div>
+          <div class="card">
+            <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.8;">
+              <strong style="font-family:'Syne',sans-serif;color:var(--text-primary);">ClassReg v1.0</strong><br>
+              Digital Class Register for CSEC/CAPE Teachers<br>
+              Supports Form Class (AM/PM) and Subject Classes<br>
+              <span style="color:var(--text-muted);font-size:0.75rem;">Offline-capable · GitHub Pages compatible</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main-content -->
+
+<!-- ===== CALENDAR DAY MODAL ===== -->
+<div class="modal-overlay" id="dayModalOverlay">
+  <div class="modal" style="max-width:820px;">
+    <div class="modal-header">
+      <div class="modal-title" id="dayModalTitle">Day Detail</div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('dayModalOverlay')">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <!-- Filters -->
+      <div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="search-bar" style="flex:1;min-width:180px;">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="dayModalSearch" placeholder="Search student..." oninput="filterDayModal()">
+        </div>
+        <select id="dayModalStatusFilter" onchange="filterDayModal()" style="width:auto;">
+          <option value="">All Statuses</option>
+        </select>
+        <select id="dayModalSort" onchange="filterDayModal()" style="width:auto;">
+          <option value="name">Sort by Name</option>
+          <option value="status">Sort by Status</option>
+        </select>
+        <select id="dayModalClass" onchange="filterDayModal()" style="width:auto;">
+          <option value="">All Classes</option>
+        </select>
+      </div>
+      <div id="dayModalContent"></div>
+    </div>
+    <div class="modal-footer">
+      <div id="dayModalStats" style="flex:1;font-size:0.8rem;color:var(--text-secondary);"></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('dayModalOverlay')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TEACHER SETUP MODAL ===== -->
+<div class="modal-overlay" id="teacherModalOverlay">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-user-tie" style="color:var(--accent);margin-right:0.4rem;"></i> Teacher Setup</div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('teacherModalOverlay')">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Teacher Name</label>
+        <input type="text" id="modalTeacherName" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label>Form / Homeroom Class <span style="color:var(--text-muted);font-size:0.75rem;">(Optional — if you are a form teacher)</span></label>
+        <input type="text" id="modalFormClass" placeholder="e.g. 4A">
+      </div>
+      <div class="form-group">
+        <label>Subject Assignments <span style="color:var(--text-muted);font-size:0.75rem;">(Subject + Class, e.g. "Chemistry 5B")</span></label>
+        <div id="modalSubjectTags" style="margin-bottom:0.5rem;min-height:32px;"></div>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" id="modalNewSubject" placeholder="e.g. Chemistry 5B" style="flex:1;" onkeydown="if(event.key==='Enter')addModalSubject()">
+          <button class="btn btn-secondary btn-sm" onclick="addModalSubject()"><i class="fa-solid fa-plus"></i> Add</button>
+        </div>
+      </div>
+      <div class="info-box">
+        <i class="fa-solid fa-circle-info"></i>
+        <span>A teacher can have one form class and multiple subject class assignments. Each subject entry should include both the subject name and class, e.g. <em>Chemistry 5A</em>.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('teacherModalOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTeacherModal()"><i class="fa-solid fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== IMPORT PREVIEW MODAL ===== -->
+<div class="modal-overlay" id="importModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title"><i class="fa-solid fa-eye" style="color:var(--accent);margin-right:0.4rem;"></i> Preview Import Data</div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('importModalOverlay')">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="importPreviewContent"></div>
+    </div>
+    <div class="modal-footer">
+      <div style="flex:1;font-size:0.82rem;color:var(--text-secondary);" id="importPreviewStats"></div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('importModalOverlay')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmImport()"><i class="fa-solid fa-file-import"></i> Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM MODAL ===== -->
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" id="confirmTitle">Confirm Action</div>
+      <button class="btn btn-ghost btn-icon btn-sm" onclick="closeModal('confirmModalOverlay')">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p id="confirmMessage" style="font-size:0.88rem;color:var(--text-secondary);"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('confirmModalOverlay')">Cancel</button>
+      <button class="btn btn-danger" id="confirmOkBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOOLTIP ===== -->
+<div class="cal-tooltip" id="calTooltip"></div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<script>
+// ============================================================
+//  APP STATE
+// ============================================================
+const APP_VERSION = '1.0.0';
+
+let state = {
+  teacher: {
+    name: '',
+    formClass: '',
+    subjects: [] // [{name: 'Chemistry', class: '5B'}, ...]
+  },
+  students: [], // [{id, name, class, studentId, gender}]
+  attendance: {}, // key: "YYYY-MM-DD|class|subject|session" or "YYYY-MM-DD|formclass|AM|PM"
+  /* attendance record structure:
+     For subject class: key = "YYYY-MM-DD|class|SubjectName"
+     value = { type:'subject', subject:'Chemistry', class:'5B', records:{ studentId: 'P' } }
+     For form class: key = "YYYY-MM-DD|formclass"
+     value = { type:'form', class:'4A', records:{ AM:{ studentId:'P' }, PM:{ studentId:'P' } } }
+  */
+  settings: {
+    theme: 'dark',
+    fontSize: 14,
+    rowHeight: 'normal',
+    showStudentIDs: true,
+    statuses: [
+      { code: 'P',  label: 'Present',         color: '#22c55e', countsAs: 'present' },
+      { code: 'A',  label: 'Absent',           color: '#ef4444', countsAs: 'absent'  },
+      { code: 'SA', label: 'Sick Absent',      color: '#f59e0b', countsAs: 'absent'  },
+      { code: 'SB', label: 'School Business',  color: '#3b82f6', countsAs: 'present' },
+      { code: 'E',  label: 'Excused',          color: '#a855f7', countsAs: 'absent'  },
+      { code: 'L',  label: 'Late',             color: '#f97316', countsAs: 'present' },
+    ]
+  },
+  reportHistory: [],
+  ui: {
+    currentTab: 'attendance',
+    attRole: '',       // 'form' or 'subject|SubjectName|ClassName'
+    attClass: '',
+    attSession: 'AM',
+    calYear: new Date().getFullYear(),
+    calMonth: new Date().getMonth(),
+    calClassFilter: '',
+  }
+};
+
+// Pending import data
+let pendingImport = [];
+
+// Current attendance draft (unsaved)
+let attDraft = {}; // studentId -> status code
+
+// ============================================================
+//  PERSISTENCE
+// ============================================================
+function saveState() {
+  try {
+    localStorage.setItem('classreg_state', JSON.stringify(state));
+  } catch(e) { showToast('Storage error: ' + e.message, 'error'); }
+}
+
+function loadState() {
+  const raw = localStorage.getItem('classreg_state');
+  if (raw) {
+    try {
+      const loaded = JSON.parse(raw);
+      state = deepMerge(state, loaded);
+    } catch(e) { console.error('Failed to load state', e); }
+  }
+}
+
+function deepMerge(target, source) {
+  const out = { ...target };
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      out[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      out[key] = source[key];
+    }
+  }
+  return out;
+}
+
+// ============================================================
+//  ID GENERATOR
+// ============================================================
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+// ============================================================
+//  TAB NAVIGATION
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  state.ui.currentTab = name;
+  if (name === 'calendar') renderCalendar();
+  if (name === 'reports') generateReport();
+  if (name === 'data') { refreshDataTab(); renderStudentsTable(); }
+  if (name === 'settings') renderSettings();
+}
+
+function switchPivot(name) {
+  document.querySelectorAll('.pivot-tab').forEach(b => b.classList.toggle('active', b.dataset.pivot === name));
+  document.querySelectorAll('.pivot-panel').forEach(p => p.classList.toggle('active', p.id === 'pivot-' + name));
+  if (name === 'download') refreshExportStats();
+  if (name === 'students') renderStudentsTable();
+}
+
+// ============================================================
+//  MODALS
+// ============================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Close on overlay click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) closeModal(this.id);
+  });
+});
+
+// ============================================================
+//  TOAST NOTIFICATIONS
+// ============================================================
+function showToast(msg, type = 'info') {
+  const icons = { success:'fa-check-circle', error:'fa-times-circle', info:'fa-circle-info', warning:'fa-exclamation-triangle' };
+  const colors = { success:'var(--success)', error:'var(--danger)', info:'var(--accent-2)', warning:'var(--warning)' };
+  const div = document.createElement('div');
+  div.className = `toast ${type}`;
+  div.innerHTML = `<i class="fa-solid ${icons[type]}" style="color:${colors[type]};"></i>${msg}`;
+  document.getElementById('toastContainer').appendChild(div);
+  setTimeout(() => div.remove(), 3000);
+}
+
+// ============================================================
+//  DATE HELPERS
+// ============================================================
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return dt.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+}
+
+function isWeekend(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.getDay() === 0 || d.getDay() === 6;
+}
+
+function getWeekRange() {
+  const now = new Date();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  return { from: mon.toISOString().slice(0,10), to: sun.toISOString().slice(0,10) };
+}
+
+function getMonthRange() {
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0,10);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0,10);
+  return { from, to };
+}
+
+// ============================================================
+//  INIT
+// ============================================================
+function init() {
+  loadState();
+  applyTheme();
+  applyFontSize(state.settings.fontSize);
+  document.getElementById('fontSizeSlider').value = state.settings.fontSize;
+  document.getElementById('fontSizeLabel').textContent = state.settings.fontSize + 'px';
+  document.getElementById('themeToggle').checked = state.settings.theme === 'light';
+  document.getElementById('attDatePicker').value = today();
+  updateNavDate();
+  updateTeacherChip();
+  populateAttSelects();
+  renderSettings();
+  populateCalClassFilter();
+  populateRepFilters();
+  populateDataFilters();
+  // Try to load from data.json (GitHub Pages)
+  tryLoadDataJson();
+  setInterval(updateNavDate, 60000);
+}
+
+function updateNavDate() {
+  const now = new Date();
+  document.getElementById('navDate').textContent = now.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+
+function updateTeacherChip() {
+  const n = state.teacher.name;
+  document.getElementById('teacherNameDisplay').textContent = n || 'Setup Teacher';
+  if (state.settings.theme) {
+    document.getElementById('settingsTeacherName').value = state.teacher.name || '';
+    document.getElementById('settingsFormClass').value = state.teacher.formClass || '';
+  }
+}
+
+// ============================================================
+//  TEACHER MODAL
+// ============================================================
+function openTeacherModal() {
+  document.getElementById('modalTeacherName').value = state.teacher.name || '';
+  document.getElementById('modalFormClass').value = state.teacher.formClass || '';
+  renderModalSubjectTags();
+  openModal('teacherModalOverlay');
+}
+
+function renderModalSubjectTags() {
+  const wrap = document.getElementById('modalSubjectTags');
+  wrap.innerHTML = state.teacher.subjects.map((s, i) =>
+    `<span class="teacher-class-tag">
+      <i class="fa-solid fa-flask" style="font-size:0.7rem;color:var(--accent);"></i>
+      ${s.name} — ${s.class}
+      <span class="tag-remove" onclick="removeSubject(${i},'modal')">×</span>
+    </span>`
+  ).join('');
+}
+
+function addModalSubject() {
+  const val = document.getElementById('modalNewSubject').value.trim();
+  if (!val) return;
+  // Parse: last word is class, rest is subject name
+  const parts = val.split(' ');
+  const cls = parts.pop();
+  const subj = parts.join(' ');
+  if (!subj || !cls) { showToast('Enter subject and class, e.g. Chemistry 5B', 'warning'); return; }
+  state.teacher.subjects.push({ name: subj, class: cls });
+  document.getElementById('modalNewSubject').value = '';
+  renderModalSubjectTags();
+}
+
+function removeSubject(idx, source) {
+  state.teacher.subjects.splice(idx, 1);
+  if (source === 'modal') renderModalSubjectTags();
+  renderSubjectClassTags();
+}
+
+function saveTeacherModal() {
+  state.teacher.name = document.getElementById('modalTeacherName').value.trim();
+  state.teacher.formClass = document.getElementById('modalFormClass').value.trim();
+  saveState();
+  updateTeacherChip();
+  populateAttSelects();
+  populateCalClassFilter();
+  populateRepFilters();
+  closeModal('teacherModalOverlay');
+  showToast('Teacher profile saved!', 'success');
+}
+
+// ============================================================
+//  SETTINGS
+// ============================================================
+function renderSettings() {
+  document.getElementById('settingsTeacherName').value = state.teacher.name || '';
+  document.getElementById('settingsFormClass').value = state.teacher.formClass || '';
+  renderSubjectClassTags();
+  renderStatusEditor();
+  document.getElementById('showStudentIDs').checked = state.settings.showStudentIDs !== false;
+  document.getElementById('rowHeight').value = state.settings.rowHeight || 'normal';
+}
+
+function saveTeacherSettings() {
+  state.teacher.name = document.getElementById('settingsTeacherName').value.trim();
+  state.teacher.formClass = document.getElementById('settingsFormClass').value.trim();
+  saveState();
+  updateTeacherChip();
+  populateAttSelects();
+}
+
+function renderSubjectClassTags() {
+  const wrap = document.getElementById('subjectClassTags');
+  if (!wrap) return;
+  wrap.innerHTML = state.teacher.subjects.map((s, i) =>
+    `<span class="teacher-class-tag">
+      <i class="fa-solid fa-flask" style="font-size:0.7rem;color:var(--accent);"></i>
+      ${s.name} — ${s.class}
+      <span class="tag-remove" onclick="removeSubject(${i},'settings')">×</span>
+    </span>`
+  ).join('') || '<span style="font-size:0.78rem;color:var(--text-muted);">No subject classes added yet.</span>';
+}
+
+function addSubjectClass() {
+  const val = document.getElementById('newSubjectClass').value.trim();
+  if (!val) return;
+  const parts = val.split(' ');
+  const cls = parts.pop();
+  const subj = parts.join(' ');
+  if (!subj || !cls) { showToast('Enter subject and class, e.g. Chemistry 5B', 'warning'); return; }
+  state.teacher.subjects.push({ name: subj, class: cls });
+  document.getElementById('newSubjectClass').value = '';
+  renderSubjectClassTags();
+  saveState();
+  populateAttSelects();
+}
+
+function renderStatusEditor() {
+  const list = document.getElementById('statusEditorList');
+  list.innerHTML = state.settings.statuses.map((s, i) => `
+    <div class="status-editor-row" data-idx="${i}">
+      <input type="text" value="${s.code}" placeholder="Code" maxlength="4" 
+             oninput="updateStatus(${i},'code',this.value)" style="font-family:'JetBrains Mono',monospace;font-weight:600;">
+      <input type="text" value="${s.label}" placeholder="Label" 
+             oninput="updateStatus(${i},'label',this.value)">
+      <input type="color" value="${s.color}" 
+             oninput="updateStatus(${i},'color',this.value)">
+      <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;">
+        <div>Counts as:</div>
+        <select style="width:auto;" onchange="updateStatus(${i},'countsAs',this.value)">
+          <option value="present" ${s.countsAs==='present'?'selected':''}>Present</option>
+          <option value="absent" ${s.countsAs==='absent'?'selected':''}>Absent</option>
+        </select>
+      </div>
+      <div class="badge" style="background:${s.color}22;color:${s.color};border-color:${s.color}44;">${s.code}</div>
+      <button class="btn btn-danger btn-icon btn-sm" onclick="removeStatus(${i})" title="Remove">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+  `).join('');
+}
+
+function updateStatus(idx, field, val) {
+  state.settings.statuses[idx][field] = val;
+  saveState();
+  // Refresh badge preview
+  const row = document.querySelector(`.status-editor-row[data-idx="${idx}"]`);
+  if (row) {
+    const badge = row.querySelector('.badge');
+    const s = state.settings.statuses[idx];
+    badge.style.background = s.color + '22';
+    badge.style.color = s.color;
+    badge.style.borderColor = s.color + '44';
+    badge.textContent = s.code;
+  }
+}
+
+function removeStatus(idx) {
+  state.settings.statuses.splice(idx, 1);
+  renderStatusEditor();
+  saveState();
+}
+
+function addNewStatus() {
+  state.settings.statuses.push({ code: 'NEW', label: 'New Status', color: '#888888', countsAs: 'absent' });
+  renderStatusEditor();
+  saveState();
+}
+
+function toggleTheme() {
+  const isLight = document.getElementById('themeToggle').checked;
+  state.settings.theme = isLight ? 'light' : 'dark';
+  applyTheme();
+  saveState();
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = state.settings.theme;
+  const toggle = document.getElementById('themeToggle');
+  if (toggle) toggle.checked = state.settings.theme === 'light';
+}
+
+function onFontSizeChange(val) {
+  document.getElementById('fontSizeLabel').textContent = val + 'px';
+  applyFontSize(val);
+  state.settings.fontSize = parseInt(val);
+  saveState();
+}
+
+function applyFontSize(val) {
+  document.documentElement.style.setProperty('--font-size-base', val + 'px');
+}
+
+function applyRowHeight() {
+  state.settings.rowHeight = document.getElementById('rowHeight').value;
+  saveState();
+}
+
+function saveUIPrefs() {
+  state.settings.showStudentIDs = document.getElementById('showStudentIDs').checked;
+  saveState();
+}
+
+// ============================================================
+//  ATTENDANCE TAB
+// ============================================================
+function populateAttSelects() {
+  const roleSelect = document.getElementById('attRoleSelect');
+  roleSelect.innerHTML = '<option value="">— Select Role —</option>';
+
+  if (state.teacher.formClass) {
+    const opt = document.createElement('option');
+    opt.value = 'form';
+    opt.textContent = `Form Teacher — ${state.teacher.formClass}`;
+    roleSelect.appendChild(opt);
+  }
+
+  state.teacher.subjects.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = `subject|${s.name}|${s.class}`;
+    opt.textContent = `${s.name} — ${s.class}`;
+    roleSelect.appendChild(opt);
+  });
+
+  // Restore previous selection
+  if (state.ui.attRole) roleSelect.value = state.ui.attRole;
+  onRoleChange();
+}
+
+function onRoleChange() {
+  const role = document.getElementById('attRoleSelect').value;
+  state.ui.attRole = role;
+  const classSelect = document.getElementById('attClassSelect');
+  classSelect.innerHTML = '<option value="">— Select Class —</option>';
+
+  if (role === 'form') {
+    if (state.teacher.formClass) {
+      const opt = document.createElement('option');
+      opt.value = state.teacher.formClass;
+      opt.textContent = state.teacher.formClass;
+      classSelect.appendChild(opt);
+      classSelect.value = state.teacher.formClass;
+      state.ui.attClass = state.teacher.formClass;
+    }
+    document.getElementById('sessionTabsWrap').style.display = 'flex';
+  } else if (role.startsWith('subject|')) {
+    const parts = role.split('|');
+    const cls = parts[2];
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = cls;
+    classSelect.appendChild(opt);
+    classSelect.value = cls;
+    state.ui.attClass = cls;
+    document.getElementById('sessionTabsWrap').style.display = 'none';
+  } else {
+    state.ui.attClass = '';
+    document.getElementById('sessionTabsWrap').style.display = 'none';
+  }
+
+  loadAttendanceData();
+}
+
+function onAttClassChange() {
+  state.ui.attClass = document.getElementById('attClassSelect').value;
+  loadAttendanceData();
+}
+
+function switchSession(sess) {
+  state.ui.attSession = sess;
+  document.querySelectorAll('.session-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.session === sess);
+  });
+  loadAttendanceData();
+}
+
+function getAttKey() {
+  const dateVal = document.getElementById('attDatePicker').value;
+  const role = state.ui.attRole;
+  const cls = state.ui.attClass;
+  if (!dateVal || !cls || !role) return null;
+  if (role === 'form') {
+    return `${dateVal}|form|${cls}`;
+  } else {
+    const parts = role.split('|');
+    return `${dateVal}|subject|${cls}|${parts[1]}`;
+  }
+}
+
+function loadAttendanceData() {
+  const cls = state.ui.attClass;
+  const role = state.ui.attRole;
+  if (!cls || !role) {
+    document.getElementById('studentsContainer').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-users"></i><h3>No Class Selected</h3>
+        <p>Select a role and class to begin marking attendance.</p>
+      </div>`;
+    document.getElementById('quickActions').style.display = 'none';
+    document.getElementById('attSummary').style.display = 'none';
+    return;
+  }
+
+  const students = state.students.filter(s => s.class === cls);
+  if (students.length === 0) {
+    document.getElementById('studentsContainer').innerHTML = `
+      <div class="empty-state">
+        <i class="fa-solid fa-user-slash"></i><h3>No Students in ${cls}</h3>
+        <p>Add students to this class via the Data tab.</p>
+      </div>`;
+    document.getElementById('quickActions').style.display = 'none';
+    document.getElementById('attSummary').style.display = 'none';
+    return;
+  }
+
+  // Load existing records
+  const key = getAttKey();
+  const existing = key ? state.attendance[key] : null;
+  const isForm = role === 'form';
+  const session = isForm ? state.ui.attSession : null;
+
+  attDraft = {};
+  if (existing) {
+    const recs = isForm ? (existing.records?.[session] || {}) : (existing.records || {});
+    students.forEach(s => { attDraft[s.id] = recs[s.id] || ''; });
+  } else {
+    students.forEach(s => { attDraft[s.id] = ''; });
+  }
+
+  renderStudentsList(students);
+  document.getElementById('quickActions').style.display = 'flex';
+  renderBulkStatusBtns();
+  updateAttSummary(students);
+}
+
+function renderStudentsList(students) {
+  const showIDs = state.settings.showStudentIDs !== false;
+  const container = document.getElementById('studentsContainer');
+  container.innerHTML = students.map((s, i) => {
+    const currentStatus = attDraft[s.id] || '';
+    return `
+    <div class="student-row" id="srow_${s.id}">
+      <input type="checkbox" class="stu-checkbox" data-id="${s.id}" onchange="onStudentCheck(this)">
+      <span class="student-num">${String(i+1).padStart(2,'0')}</span>
+      <span class="student-name">${s.name}</span>
+      ${s.gender ? `<span class="gender-chip gender-${(s.gender||'').toLowerCase()}">${s.gender}</span>` : ''}
+      ${showIDs && s.studentId ? `<span class="student-id-chip">${s.studentId}</span>` : ''}
+      <div class="status-buttons" id="sbtn_${s.id}">
+        ${renderStatusBtns(s.id, currentStatus)}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStatusBtns(studentId, currentCode) {
+  return state.settings.statuses.map(st => `
+    <button class="status-btn ${currentCode === st.code ? 'active' : ''}"
+      style="background:${st.color}22;color:${st.color};border-color:${st.color}44;"
+      onclick="setStudentStatus('${studentId}','${st.code}')"
+      title="${st.label}">${st.code}</button>
+  `).join('');
+}
+
+function setStudentStatus(studentId, code) {
+  attDraft[studentId] = attDraft[studentId] === code ? '' : code;
+  // Re-render just the status buttons
+  const btnWrap = document.getElementById('sbtn_' + studentId);
+  if (btnWrap) btnWrap.innerHTML = renderStatusBtns(studentId, attDraft[studentId]);
+  updateAttSummaryQuick();
+}
+
+function renderBulkStatusBtns() {
+  const wrap = document.getElementById('bulkStatusBtns');
+  wrap.innerHTML = state.settings.statuses.map(st => `
+    <button class="bulk-status-btn"
+      style="background:${st.color}22;color:${st.color};border-color:${st.color}44;border:1px solid;"
+      onclick="bulkSetStatus('${st.code}')" title="${st.label}">${st.code}</button>
+  `).join('');
+}
+
+function toggleSelectAll() {
+  const checkboxes = document.querySelectorAll('.stu-checkbox');
+  const allChecked = [...checkboxes].every(c => c.checked);
+  checkboxes.forEach(c => {
+    c.checked = !allChecked;
+    const row = document.getElementById('srow_' + c.dataset.id);
+    if (row) row.classList.toggle('selected', !allChecked);
+  });
+  document.getElementById('selAllTxt').textContent = allChecked ? 'Select All' : 'Deselect All';
+}
+
+function onStudentCheck(cb) {
+  const row = document.getElementById('srow_' + cb.dataset.id);
+  if (row) row.classList.toggle('selected', cb.checked);
+}
+
+function bulkSetStatus(code) {
+  const checked = document.querySelectorAll('.stu-checkbox:checked');
+  if (checked.length === 0) {
+    showToast('No students selected. Use Select All or check individual students first.', 'warning');
+    return;
+  }
+  checked.forEach(cb => {
+    attDraft[cb.dataset.id] = code;
+    const btnWrap = document.getElementById('sbtn_' + cb.dataset.id);
+    if (btnWrap) btnWrap.innerHTML = renderStatusBtns(cb.dataset.id, code);
+  });
+  updateAttSummaryQuick();
+  showToast(`Marked ${checked.length} student(s) as ${code}`, 'success');
+}
+
+function updateAttSummaryQuick() {
+  const cls = state.ui.attClass;
+  const students = state.students.filter(s => s.class === cls);
+  updateAttSummary(students);
+}
+
+function updateAttSummary(students) {
+  const wrap = document.getElementById('attSummary');
+  wrap.style.display = 'flex';
+  const counts = {};
+  state.settings.statuses.forEach(s => { counts[s.code] = 0; });
+  let unmarked = 0;
+  students.forEach(s => {
+    const code = attDraft[s.id];
+    if (code && counts[code] !== undefined) counts[code]++;
+    else if (!code) unmarked++;
+  });
+  wrap.innerHTML = `<span style="font-size:0.78rem;color:var(--text-muted);margin-right:0.25rem;">Summary:</span>` +
+    state.settings.statuses.map(st =>
+      `<div class="att-summary-item">
+        <span class="badge" style="background:${st.color}22;color:${st.color};border-color:${st.color}44;">${st.code}</span>
+        <span class="count" style="color:${st.color};">${counts[st.code] || 0}</span>
+      </div>`
+    ).join('') +
+    (unmarked > 0 ? `<div class="att-summary-item"><span style="color:var(--text-muted);font-size:0.78rem;">Unmarked: ${unmarked}</span></div>` : '');
+}
+
+function saveAttendance() {
+  const key = getAttKey();
+  if (!key) { showToast('Please select class and date first.', 'warning'); return; }
+  const role = state.ui.attRole;
+  const isForm = role === 'form';
+  const session = state.ui.attSession;
+
+  if (!state.attendance[key]) {
+    if (isForm) {
+      state.attendance[key] = { type: 'form', class: state.ui.attClass, date: document.getElementById('attDatePicker').value, records: { AM: {}, PM: {} } };
+    } else {
+      const parts = role.split('|');
+      state.attendance[key] = { type: 'subject', subject: parts[1], class: state.ui.attClass, date: document.getElementById('attDatePicker').value, records: {} };
+    }
+  }
+
+  if (isForm) {
+    state.attendance[key].records[session] = { ...attDraft };
+  } else {
+    state.attendance[key].records = { ...attDraft };
+  }
+
+  saveState();
+  showToast('Attendance saved!', 'success');
+}
+
+// ============================================================
+//  STATUS BADGE RENDER
+// ============================================================
+function renderBadge(code) {
+  const s = state.settings.statuses.find(st => st.code === code);
+  if (!s) return `<span class="badge" style="background:#88888822;color:#888;border-color:#88888844;">${code||'—'}</span>`;
+  return `<span class="badge" style="background:${s.color}22;color:${s.color};border-color:${s.color}44;">${s.code}</span>`;
+}
+
+// ============================================================
+//  CALENDAR TAB
+// ============================================================
+function populateCalClassFilter() {
+  const sel = document.getElementById('calClassFilter');
+  const existing = sel.value;
+  sel.innerHTML = '<option value="">All Classes</option>';
+  getAllClasses().forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls;
+    opt.textContent = cls;
+    sel.appendChild(opt);
+  });
+  sel.value = existing;
+}
+
+function getAllClasses() {
+  const set = new Set();
+  if (state.teacher.formClass) set.add(state.teacher.formClass);
+  state.teacher.subjects.forEach(s => set.add(s.class));
+  state.students.forEach(s => s.class && set.add(s.class));
+  return [...set].sort();
+}
+
+function goToToday() {
+  const now = new Date();
+  state.ui.calYear = now.getFullYear();
+  state.ui.calMonth = now.getMonth();
+  renderCalendar();
+}
+
+function changeCalMonth(dir) {
+  state.ui.calMonth += dir;
+  if (state.ui.calMonth > 11) { state.ui.calMonth = 0; state.ui.calYear++; }
+  if (state.ui.calMonth < 0) { state.ui.calMonth = 11; state.ui.calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const year = state.ui.calYear;
+  const month = state.ui.calMonth;
+  const filterClass = document.getElementById('calClassFilter').value;
+
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonthTitle').textContent = `${monthNames[month]} ${year}`;
+
+  const grid = document.getElementById('calGrid');
+  // Keep headers
+  const headers = grid.querySelectorAll('.cal-day-header');
+  grid.innerHTML = '';
+  headers.forEach(h => grid.appendChild(h));
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = today();
+
+  // Empty cells
+  for (let i = 0; i < firstDay; i++) {
+    const empty = document.createElement('div');
+    empty.className = 'cal-day empty';
+    grid.appendChild(empty);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isWE = isWeekend(dateStr);
+    const isToday = dateStr === todayStr;
+
+    const cell = document.createElement('div');
+    cell.className = `cal-day${isWE ? ' weekend' : ''}${isToday ? ' today' : ''}`;
+
+    // Get attendance data for this day
+    const dayData = getDayAttendanceData(dateStr, filterClass);
+    const hasData = Object.values(dayData).some(v => v.total > 0);
+    if (hasData) cell.classList.add('has-data');
+
+    const numEl = document.createElement('div');
+    numEl.className = 'cal-day-num';
+    numEl.textContent = d;
+    cell.appendChild(numEl);
+
+    // Mini badges
+    if (hasData) {
+      const badgesWrap = document.createElement('div');
+      badgesWrap.className = 'cal-day-badges';
+      const combined = {};
+      Object.values(dayData).forEach(sess => {
+        Object.entries(sess.counts || {}).forEach(([code, cnt]) => {
+          combined[code] = (combined[code] || 0) + cnt;
+        });
+      });
+      state.settings.statuses.forEach(st => {
+        if (combined[st.code]) {
+          const b = document.createElement('span');
+          b.className = 'cal-mini-badge';
+          b.style.background = st.color + '22';
+          b.style.color = st.color;
+          b.textContent = `${st.code}:${combined[st.code]}`;
+          badgesWrap.appendChild(b);
+        }
+      });
+      cell.appendChild(badgesWrap);
+    }
+
+    // Hover tooltip
+    if (hasData) {
+      cell.addEventListener('mouseenter', (e) => showCalTooltip(e, dateStr, dayData));
+      cell.addEventListener('mouseleave', () => hideCalTooltip());
+      cell.addEventListener('mousemove', (e) => moveCalTooltip(e));
+    }
+
+    // Click modal
+    if (!isWE) {
+      cell.addEventListener('click', () => openDayModal(dateStr));
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+function getDayAttendanceData(dateStr, filterClass) {
+  const result = {};
+  Object.entries(state.attendance).forEach(([key, rec]) => {
+    if (!key.startsWith(dateStr)) return;
+    if (filterClass && rec.class !== filterClass) return;
+    const label = rec.type === 'form' ? 'Form' : rec.subject;
+    if (rec.type === 'form') {
+      ['AM','PM'].forEach(sess => {
+        const recs = rec.records?.[sess] || {};
+        const counts = {};
+        Object.values(recs).forEach(code => { if(code) counts[code] = (counts[code]||0)+1; });
+        result[`${label}-${sess}`] = { label:`${label} ${sess}`, counts, total: Object.keys(recs).filter(k=>recs[k]).length };
+      });
+    } else {
+      const recs = rec.records || {};
+      const counts = {};
+      Object.values(recs).forEach(code => { if(code) counts[code] = (counts[code]||0)+1; });
+      result[label] = { label, counts, total: Object.keys(recs).filter(k=>recs[k]).length };
+    }
+  });
+  return result;
+}
+
+function showCalTooltip(e, dateStr, dayData) {
+  const tip = document.getElementById('calTooltip');
+  let html = `<div class="tooltip-title">${formatDate(dateStr)}</div>`;
+  Object.values(dayData).forEach(sess => {
+    if (!sess.total) return;
+    html += `<div style="font-size:0.72rem;color:var(--accent);margin-bottom:0.3rem;font-weight:600;">${sess.label}</div>`;
+    state.settings.statuses.forEach(st => {
+      const cnt = sess.counts[st.code] || 0;
+      if (cnt > 0) {
+        html += `<div class="tooltip-stat">
+          <span class="badge" style="background:${st.color}22;color:${st.color};border-color:${st.color}44;">${st.code}</span>
+          <span style="font-weight:600;font-family:'JetBrains Mono',monospace;">${cnt}</span>
+        </div>`;
+      }
+    });
+  });
+  tip.innerHTML = html;
+  tip.classList.add('visible');
+  moveCalTooltip(e);
+}
+
+function moveCalTooltip(e) {
+  const tip = document.getElementById('calTooltip');
+  let x = e.clientX + 14;
+  let y = e.clientY + 14;
+  if (x + 200 > window.innerWidth) x = e.clientX - 200;
+  if (y + 200 > window.innerHeight) y = e.clientY - 200;
+  tip.style.left = x + 'px';
+  tip.style.top = y + 'px';
+}
+
+function hideCalTooltip() {
+  document.getElementById('calTooltip').classList.remove('visible');
+}
+
+function openDayModal(dateStr) {
+  hideCalTooltip();
+  document.getElementById('dayModalTitle').textContent = `Attendance — ${formatDate(dateStr)}`;
+  document.getElementById('dayModalSearch').value = '';
+  document.getElementById('dayModalStatusFilter').innerHTML = '<option value="">All Statuses</option>' +
+    state.settings.statuses.map(st => `<option value="${st.code}">${st.code} — ${st.label}</option>`).join('');
+  document.getElementById('dayModalClass').innerHTML = '<option value="">All Classes</option>' +
+    getAllClasses().map(c => `<option value="${c}">${c}</option>`).join('');
+  renderDayModalContent(dateStr);
+  openModal('dayModalOverlay');
+  document.getElementById('dayModalOverlay').dataset.date = dateStr;
+}
+
+function filterDayModal() {
+  const dateStr = document.getElementById('dayModalOverlay').dataset.date;
+  if (dateStr) renderDayModalContent(dateStr);
+}
+
+function renderDayModalContent(dateStr) {
+  const search = document.getElementById('dayModalSearch').value.toLowerCase();
+  const statusF = document.getElementById('dayModalStatusFilter').value;
+  const sortBy = document.getElementById('dayModalSort').value;
+  const classF = document.getElementById('dayModalClass').value;
+  const content = document.getElementById('dayModalContent');
+
+  // Gather all records for this day
+  let rows = [];
+  Object.entries(state.attendance).forEach(([key, rec]) => {
+    if (!key.startsWith(dateStr)) return;
+    const students = state.students.filter(s => s.class === rec.class);
+    if (rec.type === 'form') {
+      ['AM','PM'].forEach(sess => {
+        const recs = rec.records?.[sess] || {};
+        students.forEach(s => {
+          rows.push({
+            name: s.name, class: rec.class, gender: s.gender,
+            session: sess, subject: 'Form Class', status: recs[s.id] || '—'
+          });
+        });
+      });
+    } else {
+      const recs = rec.records || {};
+      students.forEach(s => {
+        rows.push({
+          name: s.name, class: rec.class, gender: s.gender,
+          session: '—', subject: rec.subject, status: recs[s.id] || '—'
+        });
+      });
+    }
+  });
+
+  // Filter
+  rows = rows.filter(r => {
+    if (search && !r.name.toLowerCase().includes(search)) return false;
+    if (statusF && r.status !== statusF) return false;
+    if (classF && r.class !== classF) return false;
+    return true;
+  });
+
+  // Sort
+  if (sortBy === 'name') rows.sort((a,b) => a.name.localeCompare(b.name));
+  else rows.sort((a,b) => a.status.localeCompare(b.status));
+
+  if (rows.length === 0) {
+    content.innerHTML = `<div class="empty-state" style="padding:2rem;"><i class="fa-regular fa-calendar-xmark"></i><h3>No Records</h3><p>No attendance was marked for this day.</p></div>`;
+    document.getElementById('dayModalStats').textContent = '';
+    return;
+  }
+
+  const total = rows.length;
+  const present = rows.filter(r => {
+    const s = state.settings.statuses.find(st => st.code === r.status);
+    return s && s.countsAs === 'present';
+  }).length;
+
+  document.getElementById('dayModalStats').textContent = `${total} records • ${present} present`;
+
+  content.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Class</th>
+          <th>Session</th>
+          <th>Subject</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((r,i) => `
+          <tr>
+            <td style="color:var(--text-muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem;">${i+1}</td>
+            <td>
+              <span style="font-weight:500;">${r.name}</span>
+              ${r.gender ? `<span class="gender-chip gender-${(r.gender||'').toLowerCase()}">${r.gender}</span>` : ''}
+            </td>
+            <td>${r.class}</td>
+            <td><span style="font-size:0.78rem;color:var(--text-secondary);">${r.session}</span></td>
+            <td><span style="font-size:0.78rem;color:var(--text-secondary);">${r.subject}</span></td>
+            <td>${renderBadge(r.status === '—' ? '' : r.status)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>`;
+}
+
+// ============================================================
+//  REPORTS TAB
+// ============================================================
+function populateRepFilters() {
+  const sel = document.getElementById('repClassFilter');
+  if (!sel) return;
+  const curr = sel.value;
+  sel.innerHTML = '<option value="">All Classes</option>';
+  getAllClasses().forEach(cls => {
+    const opt = document.createElement('option');
+    opt.value = cls; opt.textContent = cls;
+    sel.appendChild(opt);
+  });
+  sel.value = curr;
+}
+
+document.getElementById('repPeriod').addEventListener('change', function() {
+  document.getElementById('customDateRange').style.display = this.value === 'custom' ? 'flex' : 'none';
+  generateReport();
+});
+
+function generateReport() {
+  const clsFilter = document.getElementById('repClassFilter').value;
+  const period = document.getElementById('repPeriod').value;
+  const repType = document.getElementById('repType').value;
+
+  let dateFrom, dateTo;
+  if (period === 'week') { const r = getWeekRange(); dateFrom = r.from; dateTo = r.to; }
+  else if (period === 'month') { const r = getMonthRange(); dateFrom = r.from; dateTo = r.to; }
+  else if (period === 'custom') {
+    dateFrom = document.getElementById('repDateFrom').value;
+    dateTo = document.getElementById('repDateTo').value;
+  }
+
+  // Filter attendance records
+  const relevantRecs = Object.entries(state.attendance).filter(([key, rec]) => {
+    if (clsFilter && rec.class !== clsFilter) return false;
+    if (repType === 'form' && rec.type !== 'form') return false;
+    if (repType === 'subject' && rec.type !== 'subject') return false;
+    if (dateFrom && rec.date < dateFrom) return false;
+    if (dateTo && rec.date > dateTo) return false;
+    return true;
+  });
+
+  // Build student stats
+  const studentStats = {};
+  const classes = new Set();
+
+  relevantRecs.forEach(([key, rec]) => {
+    classes.add(rec.class);
+    const students = state.students.filter(s => s.class === rec.class);
+
+    if (rec.type === 'subject') {
+      students.forEach(s => {
+        if (!studentStats[s.id]) studentStats[s.id] = { name: s.name, class: s.class, gender: s.gender, counts: {}, totalPresent: 0, totalAbsent: 0, totalMarked: 0 };
+        const code = rec.records[s.id];
+        if (code) {
+          studentStats[s.id].counts[code] = (studentStats[s.id].counts[code] || 0) + 1;
+          studentStats[s.id].totalMarked++;
+          const st = state.settings.statuses.find(x => x.code === code);
+          if (st) {
+            if (st.countsAs === 'present') studentStats[s.id].totalPresent++;
+            else studentStats[s.id].totalAbsent++;
+          }
+        }
+      });
+    } else {
+      ['AM','PM'].forEach(sess => {
+        const recs = rec.records?.[sess] || {};
+        students.forEach(s => {
+          if (!studentStats[s.id]) studentStats[s.id] = { name: s.name, class: s.class, gender: s.gender, counts: {}, countsBySession: {AM:{},PM:{}}, totalPresent: 0, totalAbsent: 0, totalMarked: 0 };
+          const code = recs[s.id];
+          if (code) {
+            studentStats[s.id].counts[code] = (studentStats[s.id].counts[code] || 0) + 1;
+            if (!studentStats[s.id].countsBySession) studentStats[s.id].countsBySession = {AM:{},PM:{}};
+            studentStats[s.id].countsBySession[sess][code] = (studentStats[s.id].countsBySession[sess][code] || 0) + 1;
+            studentStats[s.id].totalMarked++;
+            const st = state.settings.statuses.find(x => x.code === code);
+            if (st) {
+              if (st.countsAs === 'present') studentStats[s.id].totalPresent++;
+              else studentStats[s.id].totalAbsent++;
+            }
+          }
+        });
+      });
+    }
+  });
+
+  const students = Object.values(studentStats);
+  const totalPresent = students.reduce((s,r) => s + r.totalPresent, 0);
+  const totalAbsent = students.reduce((s,r) => s + r.totalAbsent, 0);
+  const totalMarked = students.reduce((s,r) => s + r.totalMarked, 0);
+
+  // Summary stats
+  const statsRow = document.getElementById('repStatsRow');
+  statsRow.innerHTML = `
+    <div class="report-stat-card">
+      <div class="report-stat-value" style="color:var(--accent);">${students.length}</div>
+      <div class="report-stat-label">Students</div>
+    </div>
+    <div class="report-stat-card">
+      <div class="report-stat-value" style="color:var(--success);">${totalPresent}</div>
+      <div class="report-stat-label">Total Present</div>
+    </div>
+    <div class="report-stat-card">
+      <div class="report-stat-value" style="color:var(--danger);">${totalAbsent}</div>
+      <div class="report-stat-label">Total Absent</div>
+    </div>`;
+
+  const search = document.getElementById('repSearch').value.toLowerCase();
+  const filtered = students.filter(s => !search || s.name.toLowerCase().includes(search));
+
+  if (filtered.length === 0) {
+    document.getElementById('repTableWrap').innerHTML = `<div class="empty-state"><i class="fa-solid fa-chart-pie"></i><h3>No Data</h3><p>No attendance records match the current filters.</p></div>`;
+    document.getElementById('genderReportCard').style.display = 'none';
+    return;
+  }
+
+  const statuses = state.settings.statuses;
+  const thead = `<tr>
+    <th>Student</th><th>Class</th>
+    ${statuses.map(s => `<th>${renderBadge(s.code)}</th>`).join('')}
+    <th style="color:var(--success);">Present</th>
+    <th style="color:var(--danger);">Absent</th>
+    <th>Marked</th>
+    <th>%</th>
+  </tr>`;
+
+  const tbody = filtered.map(s => {
+    const pct = s.totalMarked > 0 ? Math.round(s.totalPresent / s.totalMarked * 100) : 0;
+    const pctColor = pct >= 80 ? 'var(--success)' : pct >= 60 ? 'var(--warning)' : 'var(--danger)';
+    return `<tr>
+      <td><span style="font-weight:500;">${s.name}</span> ${s.gender ? `<span class="gender-chip gender-${(s.gender||'').toLowerCase()}">${s.gender}</span>` : ''}</td>
+      <td>${s.class}</td>
+      ${statuses.map(st => `<td>${s.counts[st.code] || 0}</td>`).join('')}
+      <td style="color:var(--success);font-weight:600;">${s.totalPresent}</td>
+      <td style="color:var(--danger);font-weight:600;">${s.totalAbsent}</td>
+      <td>${s.totalMarked}</td>
+      <td><span style="color:${pctColor};font-weight:600;font-family:'JetBrains Mono',monospace;">${pct}%</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('repTableWrap').innerHTML = `
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+
+  // Gender report for form class
+  if (repType === 'form') {
+    renderGenderReport(studentStats, relevantRecs);
+  } else {
+    document.getElementById('genderReportCard').style.display = 'none';
+  }
+
+  renderReportHistory();
+}
+
+function filterReportTable() { generateReport(); }
+
+function renderGenderReport(studentStats, relevantRecs) {
+  const card = document.getElementById('genderReportCard');
+  card.style.display = '';
+
+  const genders = ['M','F'];
+  const sessions = ['AM','PM'];
+  const rows = [];
+
+  genders.forEach(g => {
+    sessions.forEach(sess => {
+      const studs = Object.values(studentStats).filter(s => (s.gender||'').toUpperCase() === g);
+      const counts = {};
+      studs.forEach(s => {
+        const sessData = s.countsBySession?.[sess] || {};
+        Object.entries(sessData).forEach(([code, cnt]) => {
+          counts[code] = (counts[code] || 0) + cnt;
+        });
+      });
+      rows.push({ label: `${g === 'M' ? '♂ Boys' : '♀ Girls'} — ${sess}`, gender: g, session: sess, counts, total: studs.length });
+    });
+  });
+
+  const statuses = state.settings.statuses;
+  document.getElementById('genderReportContent').innerHTML = `
+    <div class="report-table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Group</th>
+            ${statuses.map(s => `<th>${renderBadge(s.code)}</th>`).join('')}
+            <th style="color:var(--success);">Present</th>
+            <th style="color:var(--danger);">Absent</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => {
+            const present = statuses.filter(s => s.countsAs === 'present').reduce((a,s) => a + (r.counts[s.code]||0), 0);
+            const absent = statuses.filter(s => s.countsAs === 'absent').reduce((a,s) => a + (r.counts[s.code]||0), 0);
+            return `<tr>
+              <td style="font-weight:600;">
+                <span class="gender-chip gender-${r.gender.toLowerCase()}" style="margin-right:0.3rem;">${r.gender}</span>
+                ${r.label}
+              </td>
+              ${statuses.map(s => `<td>${r.counts[s.code] || 0}</td>`).join('')}
+              <td style="color:var(--success);font-weight:600;">${present}</td>
+              <td style="color:var(--danger);font-weight:600;">${absent}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ============================================================
+//  REPORT EXPORT
+// ============================================================
+function generatePDFReport() {
+  showToast('Preparing print view...', 'info');
+  const table = document.getElementById('repTableWrap').innerHTML;
+  const title = `ClassReg Report — ${new Date().toLocaleDateString()}`;
+  const win = window.open('','_blank');
+  win.document.write(`<html><head><title>${title}</title>
+    <style>
+      body{font-family:sans-serif;font-size:12px;color:#111;}
+      table{width:100%;border-collapse:collapse;}
+      th,td{padding:6px 8px;border:1px solid #ccc;text-align:left;}
+      th{background:#f0f0f0;font-weight:700;}
+      h2{margin-bottom:12px;}
+    </style></head><body>
+    <h2>${title}</h2>
+    ${table}
+    </body></html>`);
+  win.document.close();
+  win.print();
+  addReportToHistory(title, 'PDF');
+}
+
+function generateCSVReport() {
+  const students = getReportStudents();
+  if (!students.length) { showToast('No data to export', 'warning'); return; }
+  const statuses = state.settings.statuses;
+  const header = ['Name','Class','Gender',...statuses.map(s=>s.code),'Present','Absent','Marked','Pct'].join(',');
+  const rows = students.map(s => {
+    const pct = s.totalMarked > 0 ? Math.round(s.totalPresent / s.totalMarked * 100) : 0;
+    return [s.name, s.class, s.gender||'', ...statuses.map(st=>s.counts[st.code]||0), s.totalPresent, s.totalAbsent, s.totalMarked, pct+'%'].join(',');
+  });
+  downloadText('report.csv', [header,...rows].join('\n'), 'text/csv');
+  addReportToHistory('Attendance Report', 'CSV');
+  showToast('CSV report exported!', 'success');
+}
+
+function getReportStudents() {
+  const clsFilter = document.getElementById('repClassFilter').value;
+  const period = document.getElementById('repPeriod').value;
+  let dateFrom, dateTo;
+  if (period === 'week') { const r = getWeekRange(); dateFrom = r.from; dateTo = r.to; }
+  else if (period === 'month') { const r = getMonthRange(); dateFrom = r.from; dateTo = r.to; }
+  else if (period === 'custom') {
+    dateFrom = document.getElementById('repDateFrom').value;
+    dateTo = document.getElementById('repDateTo').value;
+  }
+  const relevantRecs = Object.entries(state.attendance).filter(([key, rec]) => {
+    if (clsFilter && rec.class !== clsFilter) return false;
+    if (dateFrom && rec.date < dateFrom) return false;
+    if (dateTo && rec.date > dateTo) return false;
+    return true;
+  });
+  const studentStats = {};
+  relevantRecs.forEach(([key, rec]) => {
+    const students = state.students.filter(s => s.class === rec.class);
+    students.forEach(s => {
+      if (!studentStats[s.id]) studentStats[s.id] = { name: s.name, class: s.class, gender: s.gender, counts: {}, totalPresent: 0, totalAbsent: 0, totalMarked: 0 };
+      const code = rec.type === 'subject' ? rec.records[s.id] : undefined;
+      if (code) {
+        studentStats[s.id].counts[code] = (studentStats[s.id].counts[code] || 0) + 1;
+        studentStats[s.id].totalMarked++;
+        const st = state.settings.statuses.find(x => x.code === code);
+        if (st) { if (st.countsAs === 'present') studentStats[s.id].totalPresent++; else studentStats[s.id].totalAbsent++; }
+      }
+    });
+  });
+  return Object.values(studentStats);
+}
+
+function addReportToHistory(title, type) {
+  state.reportHistory.unshift({
+    id: genId(), title, type, timestamp: new Date().toISOString()
+  });
+  state.reportHistory = state.reportHistory.slice(0, 50);
+  saveState();
+  renderReportHistory();
+}
+
+function renderReportHistory() {
+  const list = document.getElementById('reportHistoryList');
+  if (!state.reportHistory.length) {
+    list.innerHTML = `<div class="empty-state" style="padding:1.5rem;"><i class="fa-regular fa-file-pdf"></i><h3>No Reports Generated</h3><p>Exported reports will appear here.</p></div>`;
+    return;
+  }
+  list.innerHTML = state.reportHistory.map(r => `
+    <div class="report-history-item">
+      <div class="report-icon"><i class="fa-solid fa-file-${r.type.toLowerCase() === 'pdf' ? 'pdf' : 'csv'}"></i></div>
+      <div style="flex:1;">
+        <div style="font-weight:500;font-size:0.85rem;">${r.title}</div>
+        <div style="font-size:0.74rem;color:var(--text-muted);">${new Date(r.timestamp).toLocaleString()}</div>
+      </div>
+      <span class="badge" style="background:var(--danger-dim);color:var(--danger);border-color:rgba(239,68,68,0.25);">${r.type}</span>
+    </div>
+  `).join('');
+}
+
+function clearReportHistory() {
+  state.reportHistory = [];
+  saveState();
+  renderReportHistory();
+  showToast('Report history cleared', 'info');
+}
+
+// ============================================================
+//  DATA TAB
+// ============================================================
+function refreshDataTab() {
+  document.getElementById('studentCount').textContent = state.students.length;
+  refreshExportStats();
+  populateDataFilters();
+}
+
+function refreshExportStats() {
+  const el = document.getElementById('exportStats');
+  if (!el) return;
+  el.innerHTML = `Students: ${state.students.length} | Attendance Records: ${Object.keys(state.attendance).length} | Report History: ${state.reportHistory.length}`;
+}
+
+function populateDataFilters() {
+  ['studentClassFilter', 'expAttClass'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const curr = sel.value;
+    sel.innerHTML = '<option value="">All Classes</option>';
+    getAllClasses().forEach(cls => {
+      const opt = document.createElement('option');
+      opt.value = cls; opt.textContent = cls;
+      sel.appendChild(opt);
+    });
+    sel.value = curr;
+  });
+}
+
+// File upload
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) processUploadedFile(file);
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processUploadedFile(file);
+}
+
+function processUploadedFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'json') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (Array.isArray(data)) { pendingImport = normalizeStudents(data); showImportPreview(); }
+        else showToast('JSON must be an array of student objects', 'error');
+      } catch { showToast('Invalid JSON file', 'error'); }
+    };
+    reader.readAsText(file);
+  } else if (ext === 'csv') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingImport = normalizeStudents(parseCSVText(e.target.result, ','));
+      showImportPreview();
+    };
+    reader.readAsText(file);
+  } else if (ext === 'xlsx') {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws);
+        pendingImport = normalizeStudents(data);
+        showImportPreview();
+      } catch { showToast('Failed to read XLSX file', 'error'); }
+    };
+    reader.readAsArrayBuffer(file);
+  } else {
+    showToast('Unsupported file type. Use JSON, CSV, or XLSX.', 'error');
+  }
+}
+
+function parseCSVText(text, delim) {
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(delim).map(h => h.trim().toLowerCase().replace(/"/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(delim).map(v => v.trim().replace(/"/g,''));
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+
+function normalizeStudents(arr) {
+  return arr.map(r => ({
+    id: genId(),
+    name: r.name || r.Name || r.fullName || r['Full Name'] || r.student || r.Student || '',
+    class: r.class || r.Class || r.className || r.homeroom || '',
+    studentId: r.studentId || r['Student ID'] || r.id || r.ID || '',
+    gender: (r.gender || r.Gender || r.sex || r.Sex || '').toUpperCase().slice(0,1)
+  })).filter(s => s.name && s.class);
+}
+
+function showImportPreview() {
+  if (!pendingImport.length) { showToast('No valid student data found', 'warning'); return; }
+  document.getElementById('importPreviewStats').textContent = `${pendingImport.length} students ready to import`;
+  document.getElementById('importPreviewContent').innerHTML = `
+    <div class="info-box" style="margin-bottom:0.75rem;">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>Review the data below before importing. Existing students with matching names may be duplicated.</span>
+    </div>
+    <div style="max-height:300px;overflow-y:auto;">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Name</th><th>Class</th><th>ID</th><th>Gender</th></tr></thead>
+        <tbody>
+          ${pendingImport.slice(0,100).map((s,i) => `
+            <tr>
+              <td style="color:var(--text-muted);">${i+1}</td>
+              <td>${s.name}</td>
+              <td>${s.class}</td>
+              <td>${s.studentId || '—'}</td>
+              <td>${s.gender ? `<span class="gender-chip gender-${s.gender.toLowerCase()}">${s.gender}</span>` : '—'}</td>
+            </tr>`).join('')}
+          ${pendingImport.length > 100 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">...and ${pendingImport.length-100} more</td></tr>` : ''}
+        </tbody>
+      </table>
+    </div>`;
+  openModal('importModalOverlay');
+}
+
+function confirmImport() {
+  state.students.push(...pendingImport);
+  pendingImport = [];
+  saveState();
+  closeModal('importModalOverlay');
+  showToast(`Imported ${state.students.length} students!`, 'success');
+  renderStudentsTable();
+  populateAttSelects();
+  populateCalClassFilter();
+  populateRepFilters();
+  populateDataFilters();
+  document.getElementById('studentCount').textContent = state.students.length;
+}
+
+function parsePastedData() {
+  const text = document.getElementById('pasteArea').value.trim();
+  const delim = document.getElementById('pasteDelimiter').value === '\\t' ? '\t' : document.getElementById('pasteDelimiter').value;
+  if (!text) { showToast('Nothing to parse', 'warning'); return; }
+  pendingImport = normalizeStudents(parseCSVText(text, delim));
+  if (!pendingImport.length) { showToast('Could not parse data. Check delimiter and format.', 'error'); return; }
+  const prev = document.getElementById('pastePreview');
+  prev.style.display = '';
+  prev.innerHTML = `<div class="info-box"><i class="fa-solid fa-check-circle" style="color:var(--success);"></i><span>Parsed ${pendingImport.length} students. <button class="btn btn-primary btn-sm" onclick="showImportPreview()">Preview & Import</button></span></div>`;
+}
+
+function addManualStudent() {
+  const name = document.getElementById('manualName').value.trim();
+  const cls = document.getElementById('manualClass').value.trim();
+  if (!name || !cls) { showToast('Name and Class are required', 'warning'); return; }
+  const s = {
+    id: genId(),
+    name,
+    class: cls,
+    studentId: document.getElementById('manualSID').value.trim(),
+    gender: document.getElementById('manualGender').value
+  };
+  state.students.push(s);
+  saveState();
+  document.getElementById('manualName').value = '';
+  document.getElementById('manualSID').value = '';
+  document.getElementById('manualGender').value = '';
+  showToast(`Added: ${name}`, 'success');
+  renderStudentsTable();
+  document.getElementById('studentCount').textContent = state.students.length;
+  populateAttSelects();
+  populateCalClassFilter();
+  populateRepFilters();
+  populateDataFilters();
+  // Flash highlight
+  document.getElementById('manualName').focus();
+}
+
+function addBatchStudents() {
+  const text = document.getElementById('batchArea').value.trim();
+  if (!text) return;
+  const lines = text.split('\n').filter(l => l.trim());
+  let added = 0;
+  lines.forEach(line => {
+    const parts = line.split(',').map(p => p.trim());
+    if (parts[0] && parts[1]) {
+      state.students.push({ id: genId(), name: parts[0], class: parts[1], studentId: parts[2]||'', gender: (parts[3]||'').toUpperCase().slice(0,1) });
+      added++;
+    }
+  });
+  if (added) {
+    saveState();
+    showToast(`Added ${added} students`, 'success');
+    document.getElementById('batchArea').value = '';
+    renderStudentsTable();
+    document.getElementById('studentCount').textContent = state.students.length;
+    populateAttSelects();
+    populateCalClassFilter();
+    populateRepFilters();
+    populateDataFilters();
+  }
+}
+
+function renderStudentsTable() {
+  const search = document.getElementById('studentSearch')?.value.toLowerCase() || '';
+  const clsF = document.getElementById('studentClassFilter')?.value || '';
+  let students = state.students.filter(s => {
+    if (clsF && s.class !== clsF) return false;
+    if (search && !s.name.toLowerCase().includes(search) && !(s.studentId||'').toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const wrap = document.getElementById('studentsTableWrap');
+  if (!wrap) return;
+
+  if (!students.length) {
+    wrap.innerHTML = `<div class="empty-state"><i class="fa-solid fa-users"></i><h3>No Students</h3><p>${state.students.length ? 'No students match your filter.' : 'Add students using the Upload/Import tab.'}</p></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="selectAllStudents" onchange="toggleSelectAllStudents(this)"></th>
+          <th>#</th><th>Name</th><th>Class</th><th>Student ID</th><th>Gender</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${students.map((s,i) => `
+          <tr id="strow_${s.id}">
+            <td><input type="checkbox" class="stu-sel" data-id="${s.id}" onchange="checkStudentSel()"></td>
+            <td style="color:var(--text-muted);font-size:0.72rem;">${i+1}</td>
+            <td><span style="font-weight:500;">${s.name}</span></td>
+            <td>${s.class}</td>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text-muted);">${s.studentId||'—'}</td>
+            <td>${s.gender ? `<span class="gender-chip gender-${s.gender.toLowerCase()}">${s.gender}</span>` : '—'}</td>
+            <td>
+              <button class="btn btn-ghost btn-icon btn-sm" onclick="editStudent('${s.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-danger btn-icon btn-sm" onclick="deleteStudent('${s.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function toggleSelectAllStudents(cb) {
+  document.querySelectorAll('.stu-sel').forEach(c => c.checked = cb.checked);
+  checkStudentSel();
+}
+
+function checkStudentSel() {
+  const any = document.querySelectorAll('.stu-sel:checked').length > 0;
+  const btn = document.getElementById('delStudentsBtn');
+  if (btn) btn.style.display = any ? '' : 'none';
+}
+
+function deleteStudent(id) {
+  state.students = state.students.filter(s => s.id !== id);
+  saveState();
+  renderStudentsTable();
+  document.getElementById('studentCount').textContent = state.students.length;
+  showToast('Student removed', 'info');
+}
+
+function deleteSelectedStudents() {
+  const ids = [...document.querySelectorAll('.stu-sel:checked')].map(c => c.dataset.id);
+  state.students = state.students.filter(s => !ids.includes(s.id));
+  saveState();
+  renderStudentsTable();
+  document.getElementById('studentCount').textContent = state.students.length;
+  document.getElementById('delStudentsBtn').style.display = 'none';
+  showToast(`Deleted ${ids.length} student(s)`, 'info');
+}
+
+function editStudent(id) {
+  const s = state.students.find(x => x.id === id);
+  if (!s) return;
+  const name = prompt('Edit name:', s.name);
+  if (name === null) return;
+  const cls = prompt('Edit class:', s.class);
+  if (cls === null) return;
+  s.name = name.trim() || s.name;
+  s.class = cls.trim() || s.class;
+  saveState();
+  renderStudentsTable();
+  showToast('Student updated', 'success');
+}
+
+// Export functions
+function exportFullData() {
+  const data = { version: APP_VERSION, exportedAt: new Date().toISOString(), ...state };
+  downloadJSON('app-data.json', data);
+  showToast('Data exported!', 'success');
+}
+
+function exportStudentsCSV() {
+  const header = 'name,class,studentId,gender';
+  const rows = state.students.map(s => `${q(s.name)},${q(s.class)},${q(s.studentId||'')},${q(s.gender||'')}`);
+  downloadText('students.csv', [header,...rows].join('\n'), 'text/csv');
+  showToast('Students CSV exported!', 'success');
+}
+
+function exportStudentsXLSX() {
+  const data = state.students.map(s => ({ Name: s.name, Class: s.class, 'Student ID': s.studentId||'', Gender: s.gender||'' }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Students');
+  XLSX.writeFile(wb, 'students.xlsx');
+  showToast('Students XLSX exported!', 'success');
+}
+
+function exportAttendanceCSV() {
+  const clsF = document.getElementById('expAttClass').value;
+  const from = document.getElementById('expDateFrom').value;
+  const to = document.getElementById('expDateTo').value;
+  const rows = [['Date','Class','Type','Subject','Session','Student','Status']];
+  Object.entries(state.attendance).forEach(([key, rec]) => {
+    if (clsF && rec.class !== clsF) return;
+    if (from && rec.date < from) return;
+    if (to && rec.date > to) return;
+    const students = state.students.filter(s => s.class === rec.class);
+    if (rec.type === 'subject') {
+      students.forEach(s => {
+        rows.push([rec.date, rec.class, 'Subject', rec.subject, '—', s.name, rec.records[s.id]||'']);
+      });
+    } else {
+      ['AM','PM'].forEach(sess => {
+        students.forEach(s => {
+          rows.push([rec.date, rec.class, 'Form', 'Form Class', sess, s.name, rec.records?.[sess]?.[s.id]||'']);
+        });
+      });
+    }
+  });
+  downloadText('attendance.csv', rows.map(r => r.map(q).join(',')).join('\n'), 'text/csv');
+  showToast('Attendance CSV exported!', 'success');
+}
+
+function exportAttendanceXLSX() {
+  const clsF = document.getElementById('expAttClass').value;
+  const from = document.getElementById('expDateFrom').value;
+  const to = document.getElementById('expDateTo').value;
+  const data = [];
+  Object.entries(state.attendance).forEach(([key, rec]) => {
+    if (clsF && rec.class !== clsF) return;
+    if (from && rec.date < from) return;
+    if (to && rec.date > to) return;
+    const students = state.students.filter(s => s.class === rec.class);
+    if (rec.type === 'subject') {
+      students.forEach(s => {
+        data.push({ Date: rec.date, Class: rec.class, Type: 'Subject', Subject: rec.subject, Session: '—', Student: s.name, Status: rec.records[s.id]||'' });
+      });
+    } else {
+      ['AM','PM'].forEach(sess => {
+        students.forEach(s => {
+          data.push({ Date: rec.date, Class: rec.class, Type: 'Form', Subject: 'Form Class', Session: sess, Student: s.name, Status: rec.records?.[sess]?.[s.id]||'' });
+        });
+      });
+    }
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+  XLSX.writeFile(wb, 'attendance.xlsx');
+  showToast('Attendance XLSX exported!', 'success');
+}
+
+function importFullAppData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data.students && data.attendance && data.settings) {
+        showConfirm('Import App Data', 'This will replace ALL current data (students, attendance, settings). Are you sure?', () => {
+          state.students = data.students || [];
+          state.attendance = data.attendance || {};
+          state.settings = data.settings || state.settings;
+          state.teacher = data.teacher || state.teacher;
+          state.reportHistory = data.reportHistory || [];
+          saveState();
+          applyTheme();
+          applyFontSize(state.settings.fontSize);
+          populateAttSelects();
+          renderSettings();
+          renderStudentsTable();
+          populateCalClassFilter();
+          populateRepFilters();
+          populateDataFilters();
+          document.getElementById('studentCount').textContent = state.students.length;
+          updateTeacherChip();
+          showToast('App data imported successfully!', 'success');
+        });
+      } else {
+        showToast('Invalid app data file', 'error');
+      }
+    } catch { showToast('Failed to read file', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+async function tryLoadDataJson() {
+  try {
+    const res = await fetch('./app-data.json');
+    if (res.ok) {
+      const data = await res.json();
+      if (data.students && !localStorage.getItem('classreg_state')) {
+        state.students = data.students || [];
+        state.attendance = data.attendance || {};
+        state.settings = { ...state.settings, ...(data.settings || {}) };
+        state.teacher = data.teacher || state.teacher;
+        state.reportHistory = data.reportHistory || [];
+        saveState();
+        populateAttSelects();
+        populateCalClassFilter();
+        populateRepFilters();
+        populateDataFilters();
+        updateTeacherChip();
+        applyTheme();
+        applyFontSize(state.settings.fontSize);
+        document.getElementById('studentCount').textContent = state.students.length;
+        showToast('Loaded data from app-data.json', 'info');
+      }
+    }
+  } catch(e) { /* No data.json, use localStorage */ }
+}
+
+function loadFromFile() {
+  document.getElementById('importAppData').click();
+}
+
+// ============================================================
+//  CONFIRM MODAL
+// ============================================================
+function showConfirm(title, msg, onOk) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = msg;
+  const btn = document.getElementById('confirmOkBtn');
+  btn.onclick = () => { closeModal('confirmModalOverlay'); onOk(); };
+  openModal('confirmModalOverlay');
+}
+
+function confirmClearData() {
+  showConfirm('Clear All Data', 'This will permanently delete all students, attendance records, and settings. This cannot be undone.', () => {
+    localStorage.removeItem('classreg_state');
+    location.reload();
+  });
+}
+
+// ============================================================
+//  UTILITY
+// ============================================================
+function q(val) {
+  if (val === null || val === undefined) return '';
+  const s = String(val);
+  return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g,'""')}"` : s;
+}
+
+function downloadJSON(filename, data) {
+  downloadText(filename, JSON.stringify(data, null, 2), 'application/json');
+}
+
+function downloadText(filename, content, type = 'text/plain') {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
+
+// ============================================================
+//  KEYBOARD SHORTCUTS
+// ============================================================
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey) {
+    switch(e.key) {
+      case 's': e.preventDefault(); if (state.ui.currentTab === 'attendance') saveAttendance(); break;
+    }
+  }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+// ============================================================
+//  START
+// ============================================================
+init();
+</script>
+</body>
+</html>
